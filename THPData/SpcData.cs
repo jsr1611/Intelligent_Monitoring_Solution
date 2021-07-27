@@ -8,6 +8,8 @@ namespace THPData
 {
     public class SpcData
     {
+
+
         public string dID_long { get; set; }
         public string sTime { get; set; }
         public string sTemperature { get; set; }
@@ -35,6 +37,7 @@ namespace THPData
         internal DataTable dtbl { get; set; }
         internal DataView dview { get; set; }
         internal string[] resultingArray { get; set; }
+        internal bool duplicate { get; set; }
 
 
         /// <summary>
@@ -47,7 +50,7 @@ namespace THPData
         public void SetData(GlobalVariables gloVar, int sensorId, string sensorCategory)
         {
             if (tbColumns == null || tbColumns.Count == 0)
-                tbColumns = GetTableColumnNames(gloVar, gloVar.sanghanHahanTable);        
+                tbColumns = GetTableColumnNames(gloVar, gloVar.sanghanHahanTable);
 
             if (tbColumns.Count == 0)
             {
@@ -198,6 +201,210 @@ namespace THPData
 
 
 
+        /// <summary>
+        /// 수집된 데이터를 DB에 저장해주는 함수
+        /// </summary>
+        /// <param name="data">수집 데이터</param>
+        /// <returns>수집이 잘 되면 true반환함</returns>
+        private Tuple<bool, string> StoreDataToDB(GlobalVariables gloVar)
+        {
+            bool res = false;
+            string txt = string.Empty;
+
+            CheckSqlConnAndCmd(gloVar);
+
+
+            if (gloVar.dID != 0)
+            {
+                gloVar.transaction = gloVar.sqlConn.BeginTransaction();
+                try
+                {
+
+                    gloVar.sqlCmdText = string.Empty;
+
+                    //---------온도 저장-------------------->
+                    if (temperature_on)
+                        gloVar.sqlCmdText += $"INSERT INTO {gloVar.dataTable} VALUES(" +
+                                    $"'{gloVar.DateAndTime}'" +
+                                    $", '{sTime}'" +
+                                    $", {gloVar.dID}" +
+                                    $", 'temperature'" + // sensorCode
+                                    $", '{sTemperature}'" +
+                                    $", '');";
+
+                    //---------습도 저장-------------------->
+                    if (humidity_on)
+                        gloVar.sqlCmdText += $"INSERT INTO {gloVar.dataTable} VALUES(" +
+                                     $"'{gloVar.DateAndTime}'" +
+                                    $", '{sTime}'" +
+                                    $", {gloVar.dID}" +
+                                    $", 'humidity'" + // sensorCode
+                                    $", '{sHumidity}'" +
+                                    $", '');";
+
+                    //---------파티클(0.3um)  저장-------------------->
+                    if (sParticle03_on)
+                        gloVar.sqlCmdText += $"INSERT INTO {gloVar.dataTable} VALUES(" +
+                                    $"'{gloVar.DateAndTime}'" +
+                                    $", '{sTime}'" +
+                                    $", {gloVar.dID}" +
+                                    $", 'particle03'" + // sensorCode
+                                    $", '{sParticle03}'" +
+                                    $", '');";
+
+                    //---------파티클(0.5um)  저장-------------------->
+                    if (sParticle05_on)
+                        gloVar.sqlCmdText += $"INSERT INTO {gloVar.dataTable} VALUES(" +
+                                    $"'{gloVar.DateAndTime}'" +
+                                    $", '{sTime}'" +
+                                    $", {gloVar.dID}" +
+                                    $", 'particle05'" + // sensorCode
+                                    $", '{sParticle05}'" +
+                                    $", '');";
+
+
+                    //---------파티클(1.0um)  저장-------------------->
+                    if (sParticle10_on)
+                        gloVar.sqlCmdText += $"INSERT INTO {gloVar.dataTable} VALUES(" +
+                                    $"'{gloVar.DateAndTime}'" +
+                                    $", '{sTime}'" +
+                                    $", {gloVar.dID}" +
+                                    $", 'particle10'" + // sensorCode
+                                    $", '{sParticle10}'" +
+                                    $", '');";
+
+                    //---------파티클(5.0um)  저장-------------------->
+                    if (sParticle50_on)
+                        gloVar.sqlCmdText += $"INSERT INTO {gloVar.dataTable} VALUES(" +
+                                    $"'{gloVar.DateAndTime}'" +
+                                    $", '{sTime}'" +
+                                    $", {gloVar.dID}" +
+                                    $", 'particle50'" + // sensorCode
+                                    $", '{sParticle50}'" +
+                                    $", '');";
+
+                    //---------파티클(10.0um)  저장-------------------->
+                    if (sParticle100_on)
+                        gloVar.sqlCmdText += $"INSERT INTO {gloVar.dataTable} VALUES(" +
+                                    $"'{gloVar.DateAndTime}'" +
+                                    $", '{sTime}'" +
+                                    $", {gloVar.dID}" +
+                                    $", 'particle100'" + // sensorCode
+                                    $", '{sParticle100}'" +
+                                    $", '');";
+
+
+                    //---------파티클(25.0um) 저장-------------------->
+                    if (sParticle250_on)
+                        gloVar.sqlCmdText += $"INSERT INTO {gloVar.dataTable} VALUES(" +
+                                    $"'{gloVar.DateAndTime}'" +
+                                    $", '{sTime}'" +
+                                    $", {gloVar.dID}" +
+                                    $", 'particle250'" + // sensorCode
+                                    $", '{sParticle250}'" +
+                                    $", '');";
+
+
+                    // -----------------DB Insert실행 부분------------->
+
+                    gloVar.sqlCmd.CommandType = CommandType.Text;
+                    gloVar.sqlCmd.CommandText = gloVar.sqlCmdText;
+                    //mutex_lock.WaitOne();
+                    if (gloVar.sqlCmd.CommandText.Length > 0)
+                    {
+                        gloVar.sqlCmd.Transaction = gloVar.transaction;
+                        if (!DataAlreadyExists(gloVar, gloVar.dID, gloVar.DateAndTime))
+                        {
+                            gloVar.sqlCmd.ExecuteNonQuery();
+                            gloVar.transaction.Commit();
+                            res = true;
+                        }
+                        else
+                        {
+                            txt = " 중복 ";
+                        }
+                    }
+                    //mutex_lock.ReleaseMutex();
+
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("\n" + ex.Message + ex.StackTrace);
+                    try
+                    {
+                        gloVar.transaction.Rollback();
+                    }
+                    catch (Exception ex2)
+                    {
+                        Console.WriteLine("\n" + ex2.Message + ex2.StackTrace);
+                    }
+
+                }
+                finally
+                {
+                    gloVar.transaction.Dispose();
+                }
+            }
+
+            return new Tuple<bool, string>(res, txt);
+        }
+
+
+
+
+
+
+        /// <summary>
+        /// 중복데이터가 이미 저장이 되어있는지 확인
+        /// </summary>
+        /// <param name="sensorId"></param>
+        /// <param name="timestamp"></param>
+        /// <returns></returns>
+        public bool DataAlreadyExists(GlobalVariables gloVar, int sensorId, string timestamp)
+        {
+            //mutex_lock2.WaitOne();
+            //semaphore.WaitOne();
+            duplicate = false;
+            try
+            {
+                gloVar.sqlCmdText = $"SELECT TOP 1 1 FROM {gloVar.dataTable} WHERE {gloVar.S_DTColumns[2]} = {sensorId} AND {gloVar.S_DTColumns[1]} LIKE '{timestamp.Substring(0, timestamp.Length - 7)}%';";
+
+                CheckSqlConnAndCmd(gloVar);
+
+                gloVar.sqlRdr = gloVar.sqlCmd.ExecuteReader();
+                if (gloVar.sqlRdr.HasRows)
+                {
+                    duplicate = true;
+                }
+                else
+                {
+                    //Console.WriteLine("\nSQL New Data vs Old:" + timestamp + " ");
+                    //Thread.Sleep(500);
+                }
+
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("중복데이터 확인 시 에러 발생. " + ex.Message + ex.StackTrace);
+            }
+            //mutex_lock2.ReleaseMutex();
+            //semaphore.Release();
+            return duplicate;
+
+        }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
         /// <summary>
@@ -208,5 +415,8 @@ namespace THPData
         {
             return "sTime: " + sTime + ", s_id_hex: " + dID_long + ", 온도: " + sTemperature + ", 습도: " + sHumidity + ", p0.3: " + sParticle03 + ", p0.5: " + sParticle05 + ", p1.0: " + sParticle10 + ", p5.0: " + sParticle50 + ", p10.0: " + sParticle100 + ", p25.0: " + sParticle250 + " ";
         }
+
+
+
     }
 }

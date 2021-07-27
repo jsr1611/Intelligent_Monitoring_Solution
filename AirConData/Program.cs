@@ -48,7 +48,7 @@ namespace AirConData
                         clientNum = i <= 3 ? 0 : 1;
 
                         gloVar.modbusClient_List[clientNum].UnitIdentifier = (byte)gloVar.ID_List[i];
-                        //Console.Write("\nTrying to read from client no: " + g.clients[clientNum].UnitIdentifier + " on port " + g.clients[clientNum].SerialPort + " ");
+                        //Console.Write("\nTrying to read from client no: " +gloVar.clients[clientNum].UnitIdentifier + " on port " +gloVar.clients[clientNum].SerialPort + " ");
                         if (!gloVar.modbusClient_List[clientNum].Connected)
                             connect(gloVar, clientNum);
                         d0 = gloVar.modbusClient_List[clientNum].ReadCoils(0, 32);
