@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.SqlClient;
 using System.Linq;
 using CommonClassLibrary;
 
@@ -9,6 +10,11 @@ namespace THPData
     public class SpcData
     {
 
+        public string DateAndTime { get; set; }
+        public int dID { get; set; }
+        public bool insertDB_OK { get; set; }
+        public int[] d { get; set; }
+        public DateTime timeNow { get; set; }
 
         public string dID_long { get; set; }
         public string sTime { get; set; }
@@ -32,12 +38,33 @@ namespace THPData
 
 
 
-        internal List<string> tbColumns { get; set; }
-        internal List<string> sensorTypes { get; set; }
-        internal DataTable dtbl { get; set; }
-        internal DataView dview { get; set; }
-        internal string[] resultingArray { get; set; }
-        internal bool duplicate { get; set; }
+
+        public SqlConnection sqlConn { get; set; }
+        public SqlCommand sqlCmd { get; set; }
+        public SqlDataReader sqlRdr { get; set; }
+        public SqlDataAdapter sqlDAptr { get; set; }
+        public SqlTransaction transaction { get; set; }
+        public string sqlConStr { get; set; }
+        public string sqlCmdText { get; set; }
+        public string sqlDefltCmdText { get; set; }
+
+
+        internal Int64 highValue { get; set; }
+        internal Int64 lowValue { get; set; }
+        private List<string> tbColumns { get; set; }
+        private List<string> sensorTypes { get; set; }
+        private DataTable dtbl { get; set; }
+        private DataView dview { get; set; }
+        private string[] resultingArray { get; set; }
+        private bool duplicate { get; set; }
+        public string consolePrintText { get; set; }
+
+        public void setSqlFields(SqlConnection sqlConn)
+        {
+            this.sqlConn = sqlConn;
+        }
+
+
 
 
         /// <summary>
@@ -49,42 +76,55 @@ namespace THPData
         /// <returns></returns>
         public void SetData(GlobalVariables gloVar, int sensorId, string sensorCategory)
         {
-            if (tbColumns == null || tbColumns.Count == 0)
-                tbColumns = GetTableColumnNames(gloVar, gloVar.sanghanHahanTable);
+            if (gloVar.sanghanHahanColumns == null || gloVar.sanghanHahanColumns.Count == 0)
+                gloVar.sanghanHahanColumns = GetTableColumnNames(gloVar, gloVar.sanghanHahanTable);
 
-            if (tbColumns.Count == 0)
+            if (gloVar.sanghanHahanColumns.Count == 0)
             {
                 Console.WriteLine($"{gloVar.sanghanHahanTable} table 존재하지 않거나 다른 에러가 발생했습니다.");
             }
-
-            gloVar.sqlCmdText = $"SELECT DISTINCT {tbColumns[2]} FROM [{gloVar.dbName}].[dbo].[{gloVar.sanghanHahanTable}] WHERE {tbColumns[0]} = '{sensorCategory}'";
-            sensorTypes = GetColumnDataAsList(gloVar, "string", tbColumns[2]); // sqlCmdText is used for getting sensorTypes
-
-            gloVar.sqlCmdText = $"SELECT {tbColumns[2]}, {tbColumns[7]} FROM [{gloVar.dbName}].[dbo].[{gloVar.sanghanHahanTable}] WHERE {tbColumns[0]} = '{sensorCategory}' AND {tbColumns[1]} = {sensorId}";
-
-            CheckSqlConnAndCmd(gloVar);
-
-
-            gloVar.sqlRdr = gloVar.sqlCmd.ExecuteReader();
-            while (gloVar.sqlRdr.Read())
+            else
             {
-                if (gloVar.sqlRdr[tbColumns[2]].Equals("temperature"))
-                    temperature_on = gloVar.sqlRdr.GetString(1).Equals("Yes");
-                else if (gloVar.sqlRdr[tbColumns[2]].Equals("humidity"))
-                    humidity_on = gloVar.sqlRdr.GetString(1).Equals("Yes");
-                else if (gloVar.sqlRdr[tbColumns[2]].Equals("particle03"))
-                    sParticle03_on = gloVar.sqlRdr.GetString(1).Equals("Yes");
-                else if (gloVar.sqlRdr[tbColumns[2]].Equals("particle05"))
-                    sParticle05_on = gloVar.sqlRdr.GetString(1).Equals("Yes");
-                else if (gloVar.sqlRdr[tbColumns[2]].Equals("particle10"))
-                    sParticle10_on = gloVar.sqlRdr.GetString(1).Equals("Yes");
-                else if (gloVar.sqlRdr[tbColumns[2]].Equals("particle50"))
-                    sParticle50_on = gloVar.sqlRdr.GetString(1).Equals("Yes");
-                else if (gloVar.sqlRdr[tbColumns[2]].Equals("particle100"))
-                    sParticle100_on = gloVar.sqlRdr.GetString(1).Equals("Yes");
-                else if (gloVar.sqlRdr[tbColumns[2]].Equals("particle250"))
-                    sParticle250_on = gloVar.sqlRdr.GetString(1).Equals("Yes");
+
+
+                //sqlCmdText = $"SELECT DISTINCT {gloVar.sanghanHahanColumns[2]} FROM [{gloVar.dbName}].[dbo].[{gloVar.sanghanHahanTable}] WHERE {gloVar.sanghanHahanColumns[0]} = '{sensorCategory}'";
+                //sensorTypes = GetColumnDataAsList(gloVar, "string", gloVar.sanghanHahanColumns[2], sqlCmdText); // sqlCmdText is used for getting sensorTypes
+
+                sqlCmdText = $"SELECT {gloVar.sanghanHahanColumns[2]}, {gloVar.sanghanHahanColumns[7]} FROM [{gloVar.dbName}].[dbo].[{gloVar.sanghanHahanTable}] WHERE {gloVar.sanghanHahanColumns[0]} = '{sensorCategory}' AND {gloVar.sanghanHahanColumns[1]} = {sensorId}";
+
+                CheckSqlConnAndCmd(gloVar);
+
+
+                sqlRdr = sqlCmd.ExecuteReader();
+                while (sqlRdr.Read())
+                {
+                    if (sqlRdr[gloVar.sanghanHahanColumns[2]].Equals("temperature"))
+                        temperature_on = sqlRdr.GetString(1).Equals("Yes");
+                    else if (sqlRdr[gloVar.sanghanHahanColumns[2]].Equals("humidity"))
+                        humidity_on = sqlRdr.GetString(1).Equals("Yes");
+                    else if (sqlRdr[gloVar.sanghanHahanColumns[2]].Equals("particle03"))
+                        sParticle03_on = sqlRdr.GetString(1).Equals("Yes");
+                    else if (sqlRdr[gloVar.sanghanHahanColumns[2]].Equals("particle05"))
+                        sParticle05_on = sqlRdr.GetString(1).Equals("Yes");
+                    else if (sqlRdr[gloVar.sanghanHahanColumns[2]].Equals("particle10"))
+                        sParticle10_on = sqlRdr.GetString(1).Equals("Yes");
+                    else if (sqlRdr[gloVar.sanghanHahanColumns[2]].Equals("particle50"))
+                        sParticle50_on = sqlRdr.GetString(1).Equals("Yes");
+                    else if (sqlRdr[gloVar.sanghanHahanColumns[2]].Equals("particle100"))
+                        sParticle100_on = sqlRdr.GetString(1).Equals("Yes");
+                    else if (sqlRdr[gloVar.sanghanHahanColumns[2]].Equals("particle250"))
+                        sParticle250_on = sqlRdr.GetString(1).Equals("Yes");
+                }
+                sqlRdr.Close();
+                sqlCmd.Dispose();
+                
             }
+
+        }
+
+        public string printUsage()
+        {
+            return " 수집여부: " + $"온도({temperature_on}), 습도({humidity_on}), 파티클: 0.3({sParticle03_on}), 0.5({sParticle05_on}), 1.0({sParticle10_on}), 5.0({sParticle50_on}), 10.0({sParticle100_on}), 25.0({sParticle250_on}) ";
         }
 
 
@@ -93,19 +133,20 @@ namespace THPData
         /// </summary>
         /// <param name="gloVar">GlobalVariables Object instance </param>
         /// <param name="tableName">table명</param>
-        /// <returns>tbColumns List of string values.</returns>
+        /// <returns>gloVar.sanghanHahanColumns List of string values.</returns>
         public List<string> GetTableColumnNames(GlobalVariables gloVar, string tableName)
         {
-            tbColumns = new List<string>();
+            if (gloVar.sanghanHahanColumns == null)
+                gloVar.sanghanHahanColumns = new List<string>();
             try
             {
                 CheckSqlConnAndCmd(gloVar);
                 resultingArray = new string[4] { null, null, $"{tableName}", null }; // string[] restrictions = resultingArray
-                dtbl = gloVar.sqlConn.GetSchema("Columns", resultingArray);
+                dtbl = sqlConn.GetSchema("Columns", resultingArray);
                 dview = dtbl.DefaultView;
                 dview.Sort = "ORDINAL_POSITION ASC";
                 dtbl = dview.ToTable();
-                tbColumns = dtbl.AsEnumerable().Select(x => x.Field<string>("COLUMN_NAME")).ToList();
+                gloVar.sanghanHahanColumns = dtbl.AsEnumerable().Select(x => x.Field<string>("COLUMN_NAME")).ToList();
 
             }
             catch (System.Exception ex)
@@ -113,7 +154,9 @@ namespace THPData
                 Console.WriteLine($"Error in getting column names for table: {tableName}. \n" + ex.Message + ex.StackTrace);
             }
 
-            return tbColumns;
+            sqlCmd.Dispose();
+
+            return gloVar.sanghanHahanColumns;
         }
 
 
@@ -125,22 +168,24 @@ namespace THPData
         /// <param name="sqlStr">SQL쿼리문</param>
         /// <param name="ColumnName">테이블명</param>
         /// <returns></returns>
-        public List<string> GetColumnDataAsList(GlobalVariables gloVar, string dataType, string ColumnName)
+        public List<string> GetColumnDataAsList(GlobalVariables gloVar, string dataType, string ColumnName, string sqlCmdText)
         {
             System.Data.DataSet ds = new System.Data.DataSet();
             List<string> res = new List<string>();
+
 
             CheckSqlConnAndCmd(gloVar);
 
 
 
-            if (gloVar.sqlDAptr == null)
-                gloVar.sqlDAptr = new System.Data.SqlClient.SqlDataAdapter();
+            if (sqlDAptr == null)
+                sqlDAptr = new System.Data.SqlClient.SqlDataAdapter();
 
             try
             {
-                gloVar.sqlDAptr.SelectCommand = gloVar.sqlCmd;
-                gloVar.sqlDAptr.Fill(ds);
+                sqlCmd.CommandText = sqlCmdText;
+                sqlDAptr.SelectCommand = sqlCmd;
+                sqlDAptr.Fill(ds);
                 if (dataType.Equals("string"))
                 {
                     res = ds.Tables[0].AsEnumerable().Select(x => x.Field<string>(ColumnName)).ToList();
@@ -155,7 +200,8 @@ namespace THPData
                 }
                 else
                 {
-                    return res;
+
+                    //return res;
                 }
 
             }
@@ -163,8 +209,51 @@ namespace THPData
             {
                 Console.WriteLine($"Error getting data as list for table column: {ColumnName}. Error msg: {ex.Message}. {ex.StackTrace}");
             }
-
+            sqlDAptr.Dispose();
+            sqlCmd.Dispose();
             return res;
+        }
+
+        /// <summary>
+        /// Clears the field values to default as follows:
+        /// string => string.Empty;
+        /// int => 0;
+        /// bool => false;
+        /// </summary>
+
+        public void Clear()
+        {
+            dID_long = string.Empty;
+            sTime = string.Empty;
+            sTemperature = string.Empty;
+            sHumidity = string.Empty;
+            sParticle03 = string.Empty;
+            sParticle05 = string.Empty;
+            sParticle10 = string.Empty;
+            sParticle50 = string.Empty;
+            sParticle100 = string.Empty;
+            sParticle250 = string.Empty;
+
+            //temperature_on = false;
+            //humidity_on = false;
+            //sParticle03_on = false;
+            //sParticle05_on = false;
+            //sParticle10_on = false;
+            //sParticle50_on = false;
+            //sParticle100_on = false;
+            //sParticle250_on = false;
+
+
+            highValue = 0;
+            lowValue = 0;
+            //gloVar.sanghanHahanColumns = null;
+            //sensorTypes = null;
+            dtbl = null;
+            dview = null;
+            resultingArray = null;
+            duplicate = false;
+            consolePrintText = string.Empty;
+
         }
 
 
@@ -174,27 +263,27 @@ namespace THPData
         /// <param name="gloVar"></param>
         private void CheckSqlConnAndCmd(GlobalVariables gloVar)
         {
-            if (gloVar.sqlConn == null)
+            if (sqlConn == null)
             {
-                gloVar.sqlConn = new System.Data.SqlClient.SqlConnection(gloVar.sqlConStr);
-                gloVar.sqlConn.Open();
+                sqlConn = new System.Data.SqlClient.SqlConnection(gloVar.sqlConStr);
+                sqlConn.Open();
             }
-            else if (gloVar.sqlConn.ConnectionString.Length == 0)
+            else if (sqlConn.ConnectionString.Length == 0)
             {
-                gloVar.sqlConn.ConnectionString = gloVar.sqlConStr;
-                gloVar.sqlConn.Open();
+                sqlConn.ConnectionString = gloVar.sqlConStr;
+                sqlConn.Open();
             }
             else
             {
-                if (gloVar.sqlConn.State != System.Data.ConnectionState.Open)
-                    gloVar.sqlConn.Open();
+                if (sqlConn.State != System.Data.ConnectionState.Open)
+                    sqlConn.Open();
             }
 
-            if (gloVar.sqlCmd == null)
-                gloVar.sqlCmd = new System.Data.SqlClient.SqlCommand();
+            if (sqlCmd == null)
+                sqlCmd = new System.Data.SqlClient.SqlCommand();
 
-            gloVar.sqlCmd.CommandText = gloVar.sqlCmdText;
-            gloVar.sqlCmd.Connection = gloVar.sqlConn;
+            sqlCmd.CommandText = sqlCmdText;
+            sqlCmd.Connection = sqlConn;
         }
 
 
@@ -206,58 +295,57 @@ namespace THPData
         /// </summary>
         /// <param name="data">수집 데이터</param>
         /// <returns>수집이 잘 되면 true반환함</returns>
-        private Tuple<bool, string> StoreDataToDB(GlobalVariables gloVar)
+        public bool StoreDataToDB(GlobalVariables gloVar)
         {
             bool res = false;
-            string txt = string.Empty;
 
             CheckSqlConnAndCmd(gloVar);
 
 
-            if (gloVar.dID != 0)
+            if (dID != 0 && DateAndTime.Length != 0 && sTime.Length != 0)
             {
-                gloVar.transaction = gloVar.sqlConn.BeginTransaction();
+                transaction = sqlConn.BeginTransaction();
                 try
                 {
 
-                    gloVar.sqlCmdText = string.Empty;
+                    sqlCmdText = string.Empty;
 
                     //---------온도 저장-------------------->
                     if (temperature_on)
-                        gloVar.sqlCmdText += $"INSERT INTO {gloVar.dataTable} VALUES(" +
-                                    $"'{gloVar.DateAndTime}'" +
+                        sqlCmdText = $"INSERT INTO {gloVar.dataTable} VALUES(" +
+                                    $"'{DateAndTime}'" +
                                     $", '{sTime}'" +
-                                    $", {gloVar.dID}" +
+                                    $", {dID}" +
                                     $", 'temperature'" + // sensorCode
                                     $", '{sTemperature}'" +
                                     $", '');";
 
                     //---------습도 저장-------------------->
                     if (humidity_on)
-                        gloVar.sqlCmdText += $"INSERT INTO {gloVar.dataTable} VALUES(" +
-                                     $"'{gloVar.DateAndTime}'" +
+                        sqlCmdText += $"INSERT INTO {gloVar.dataTable} VALUES(" +
+                                     $"'{DateAndTime}'" +
                                     $", '{sTime}'" +
-                                    $", {gloVar.dID}" +
+                                    $", {dID}" +
                                     $", 'humidity'" + // sensorCode
                                     $", '{sHumidity}'" +
                                     $", '');";
 
                     //---------파티클(0.3um)  저장-------------------->
                     if (sParticle03_on)
-                        gloVar.sqlCmdText += $"INSERT INTO {gloVar.dataTable} VALUES(" +
-                                    $"'{gloVar.DateAndTime}'" +
+                        sqlCmdText += $"INSERT INTO {gloVar.dataTable} VALUES(" +
+                                    $"'{DateAndTime}'" +
                                     $", '{sTime}'" +
-                                    $", {gloVar.dID}" +
+                                    $", {dID}" +
                                     $", 'particle03'" + // sensorCode
                                     $", '{sParticle03}'" +
                                     $", '');";
 
                     //---------파티클(0.5um)  저장-------------------->
                     if (sParticle05_on)
-                        gloVar.sqlCmdText += $"INSERT INTO {gloVar.dataTable} VALUES(" +
-                                    $"'{gloVar.DateAndTime}'" +
+                        sqlCmdText += $"INSERT INTO {gloVar.dataTable} VALUES(" +
+                                    $"'{DateAndTime}'" +
                                     $", '{sTime}'" +
-                                    $", {gloVar.dID}" +
+                                    $", {dID}" +
                                     $", 'particle05'" + // sensorCode
                                     $", '{sParticle05}'" +
                                     $", '');";
@@ -265,30 +353,30 @@ namespace THPData
 
                     //---------파티클(1.0um)  저장-------------------->
                     if (sParticle10_on)
-                        gloVar.sqlCmdText += $"INSERT INTO {gloVar.dataTable} VALUES(" +
-                                    $"'{gloVar.DateAndTime}'" +
+                        sqlCmdText += $"INSERT INTO {gloVar.dataTable} VALUES(" +
+                                    $"'{DateAndTime}'" +
                                     $", '{sTime}'" +
-                                    $", {gloVar.dID}" +
+                                    $", {dID}" +
                                     $", 'particle10'" + // sensorCode
                                     $", '{sParticle10}'" +
                                     $", '');";
 
                     //---------파티클(5.0um)  저장-------------------->
                     if (sParticle50_on)
-                        gloVar.sqlCmdText += $"INSERT INTO {gloVar.dataTable} VALUES(" +
-                                    $"'{gloVar.DateAndTime}'" +
+                        sqlCmdText += $"INSERT INTO {gloVar.dataTable} VALUES(" +
+                                    $"'{DateAndTime}'" +
                                     $", '{sTime}'" +
-                                    $", {gloVar.dID}" +
+                                    $", {dID}" +
                                     $", 'particle50'" + // sensorCode
                                     $", '{sParticle50}'" +
                                     $", '');";
 
                     //---------파티클(10.0um)  저장-------------------->
                     if (sParticle100_on)
-                        gloVar.sqlCmdText += $"INSERT INTO {gloVar.dataTable} VALUES(" +
-                                    $"'{gloVar.DateAndTime}'" +
+                        sqlCmdText += $"INSERT INTO {gloVar.dataTable} VALUES(" +
+                                    $"'{DateAndTime}'" +
                                     $", '{sTime}'" +
-                                    $", {gloVar.dID}" +
+                                    $", {dID}" +
                                     $", 'particle100'" + // sensorCode
                                     $", '{sParticle100}'" +
                                     $", '');";
@@ -296,10 +384,10 @@ namespace THPData
 
                     //---------파티클(25.0um) 저장-------------------->
                     if (sParticle250_on)
-                        gloVar.sqlCmdText += $"INSERT INTO {gloVar.dataTable} VALUES(" +
-                                    $"'{gloVar.DateAndTime}'" +
+                        sqlCmdText += $"INSERT INTO {gloVar.dataTable} VALUES(" +
+                                    $"'{DateAndTime}'" +
                                     $", '{sTime}'" +
-                                    $", {gloVar.dID}" +
+                                    $", {dID}" +
                                     $", 'particle250'" + // sensorCode
                                     $", '{sParticle250}'" +
                                     $", '');";
@@ -307,22 +395,22 @@ namespace THPData
 
                     // -----------------DB Insert실행 부분------------->
 
-                    gloVar.sqlCmd.CommandType = CommandType.Text;
-                    gloVar.sqlCmd.CommandText = gloVar.sqlCmdText;
+                    sqlCmd.CommandType = CommandType.Text;
+                    sqlCmd.CommandText = sqlCmdText;
                     //mutex_lock.WaitOne();
-                    if (gloVar.sqlCmd.CommandText.Length > 0)
+                    if (sqlCmd.CommandText.Length > 0)
                     {
-                        gloVar.sqlCmd.Transaction = gloVar.transaction;
-                        if (!DataAlreadyExists(gloVar, gloVar.dID, gloVar.DateAndTime))
-                        {
-                            gloVar.sqlCmd.ExecuteNonQuery();
-                            gloVar.transaction.Commit();
-                            res = true;
-                        }
-                        else
-                        {
-                            txt = " 중복 ";
-                        }
+                        sqlCmd.Transaction = transaction;
+                        //if (!DataAlreadyExists(gloVar, dID, DateAndTime))
+                        //{
+                        sqlCmd.ExecuteNonQuery();
+                        transaction.Commit();
+                        res = true;
+                        //}
+                        //else
+                        //{
+                        //    txt = " 중복 ";
+                        //}
                     }
                     //mutex_lock.ReleaseMutex();
 
@@ -332,7 +420,7 @@ namespace THPData
                     Console.WriteLine("\n" + ex.Message + ex.StackTrace);
                     try
                     {
-                        gloVar.transaction.Rollback();
+                        transaction.Rollback();
                     }
                     catch (Exception ex2)
                     {
@@ -342,11 +430,13 @@ namespace THPData
                 }
                 finally
                 {
-                    gloVar.transaction.Dispose();
+                    sqlConn.Close();
+                    //sqlConn.Dispose();
+                    transaction.Dispose();
                 }
             }
 
-            return new Tuple<bool, string>(res, txt);
+            return res;
         }
 
 
@@ -367,12 +457,12 @@ namespace THPData
             duplicate = false;
             try
             {
-                gloVar.sqlCmdText = $"SELECT TOP 1 1 FROM {gloVar.dataTable} WHERE {gloVar.S_DTColumns[2]} = {sensorId} AND {gloVar.S_DTColumns[1]} LIKE '{timestamp.Substring(0, timestamp.Length - 7)}%';";
+                sqlCmdText = $"SELECT TOP 1 1 FROM {gloVar.dataTable} WHERE {gloVar.S_DTColumns[2]} = {sensorId} AND {gloVar.S_DTColumns[1]} LIKE '{timestamp.Substring(0, timestamp.Length - 7)}%';";
 
                 CheckSqlConnAndCmd(gloVar);
 
-                gloVar.sqlRdr = gloVar.sqlCmd.ExecuteReader();
-                if (gloVar.sqlRdr.HasRows)
+                sqlRdr = sqlCmd.ExecuteReader();
+                if (sqlRdr.HasRows)
                 {
                     duplicate = true;
                 }

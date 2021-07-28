@@ -10,7 +10,7 @@ namespace CommonClassLibrary
         // Client 관련 변수들의 선언
         public string[] COMPort_List { get; set; }
         public ModbusClient[] modbusClient_List { get; set; }
-        public int[] ID_List { get; set; }
+        public int[] ID_List { get; set; } 
         public int[] Port_List { get; set; }
         public string[] IPAddress_List { get; set; } 
         
@@ -24,9 +24,12 @@ namespace CommonClassLibrary
         public string dataTable { get; set; }
         public string dCode { get; set; }
 
-        public string[] S_DTColumns { get; set; }
+        public string[] S_DTColumns { get; set; } 
         public string deviceTable { get; set; }
+        public string[] DevTbColumns { get; set; }
         public string sanghanHahanTable { get; set; }
+        public List<string> sanghanHahanColumns { get; set; }
+
 
 
         public SqlConnection sqlConn { get; set; }
@@ -39,11 +42,12 @@ namespace CommonClassLibrary
         public string sqlDefltCmdText { get; set; }
 
         // Common data variables
+        
+        public DateTime timeNow { get; set; }
+        public int[] d { get; set; }
         public string DateAndTime { get; set; }
         public int dID { get; set; }
         public bool insertDB_OK { get; set; }
-        public DateTime timeNow { get; set; }
-        public int[] d { get; set; }
 
     }
 }
