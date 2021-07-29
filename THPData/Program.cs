@@ -9,57 +9,70 @@ namespace THPData
     {
         static void Main(string[] args)
         {
-            Console.Write("Program started.\n");
+            
             GlobalVariables gloVar = new GlobalVariables();
 
+            // ini 읽기 //////
+            IniFile ini = new IniFile();
+            ini.Load(AppInfo.StartupPath + "\\" + "Setting.ini");
+            string program_title = ini["PROGRAM"]["TITLE"].ToString();
+            Console.Title = program_title; //"IMS Particle Data Collector App";     // Program title on top left side of the window
+            string D_SERVERNAME = ini["DBSetting"]["SERVERNAME"].ToString();
+            string D_NAME = ini["DBSetting"]["DBNAME"].ToString();
+            string D_ID = ini["DBSetting"]["ID"].ToString();
+            string D_PW = ini["DBSetting"]["PW"].ToString();
 
-            gloVar.dbName = "SENSORDATA";
+
+            Console.WriteLine($"############ {program_title} has started. ############");
+
+
+
+            gloVar.dbName = D_NAME; 
             gloVar.dataTable = gloVar.dbName[0] + "_DATATABLE";
             gloVar.deviceTable = gloVar.dbName[0] + "_DEVICES";
-            gloVar.dbUID = "dlitdb";
-            gloVar.dbPWD = "dlitdb";
-            gloVar.dbServerName = "localhost";
+            gloVar.dbUID = D_ID;
+            gloVar.dbPWD = D_PW;
+            gloVar.dbServerName = D_SERVERNAME;
+            gloVar.sanghanHahanTable = gloVar.dbName[0] + "_SanghanHahan";
+
             gloVar.sqlConn = new SqlConnection();
             gloVar.sqlConStr = $@"Data Source={gloVar.dbServerName};Initial Catalog={gloVar.dbName};User id={gloVar.dbUID};Password={gloVar.dbPWD};Integrated Security=False; MultipleActiveResultSets=True";
-
-            gloVar.sanghanHahanTable = gloVar.dbName[0] + "_SanghanHahan";
+            
 
             SpcData spcData = new SpcData();
 
-            //gloVar.devTbColumns = spcData.GetTableColumnNames(gloVar, gloVar.deviceTable).ToArray();
-            gloVar.sqlCmdText = $"SELECT sID FROM [{gloVar.dbName}].[dbo].[{gloVar.deviceTable}] ORDER BY sID ASC";
+            gloVar.DevTbColumns = spcData.GetTableColumnNames(gloVar, gloVar.deviceTable);
+            gloVar.sqlCmdText = $"SELECT {gloVar.DevTbColumns[0]} FROM [{gloVar.dbName}].[dbo].[{gloVar.deviceTable}] WHERE {gloVar.DevTbColumns[gloVar.DevTbColumns.Length - 1]} = 'YES' ORDER BY {gloVar.DevTbColumns[0]} ASC";
             gloVar.ID_List = Array.ConvertAll(spcData.GetColumnDataAsList(gloVar, "int", "sID", gloVar.sqlCmdText).ToArray(), s => int.Parse(s));
-            gloVar.sqlCmdText = $"SELECT sIPAddress FROM [{gloVar.dbName}].[dbo].[{gloVar.deviceTable}] ORDER BY sID ASC";
+            gloVar.sqlCmdText = $"SELECT {gloVar.DevTbColumns[5]} FROM [{gloVar.dbName}].[dbo].[{gloVar.deviceTable}] WHERE {gloVar.DevTbColumns[gloVar.DevTbColumns.Length - 1]} = 'YES' ORDER BY {gloVar.DevTbColumns[0]} ASC";
             gloVar.IPAddress_List = spcData.GetColumnDataAsList(gloVar, "string", "sIPAddress", gloVar.sqlCmdText).ToArray();
-            gloVar.sqlCmdText = $"SELECT sPortNumber FROM [{gloVar.dbName}].[dbo].[{gloVar.deviceTable}] ORDER BY sID ASC";
+            gloVar.sqlCmdText = $"SELECT {gloVar.DevTbColumns[6]} FROM [{gloVar.dbName}].[dbo].[{gloVar.deviceTable}] WHERE {gloVar.DevTbColumns[gloVar.DevTbColumns.Length - 1]} = 'YES' ORDER BY {gloVar.DevTbColumns[0]} ASC";
             gloVar.Port_List = Array.ConvertAll(spcData.GetColumnDataAsList(gloVar, "string", "sPortNumber", gloVar.sqlCmdText).ToArray(), s => int.Parse(s));
             gloVar.modbusClient_List = new ModbusClient[gloVar.ID_List.Length];
             System.Threading.Thread[] thread_List = new System.Threading.Thread[gloVar.ID_List.Length];
             string THREADINFO = string.Empty;
 
-
+            int i = 0;
             while (true)
             {
-                for (int i = 0; i < gloVar.ID_List.Length; i++)
+                while (i < gloVar.ID_List.Length)
                 {
                     try
                     {
-
-
                         if (thread_List[i] == null || !thread_List[i].IsAlive || thread_List[i].ThreadState == System.Threading.ThreadState.Aborted) // thread_List[i].ThreadState != System.Threading.ThreadState.Running || 
                         {
 
                             if (thread_List[i] == null)
-                                THREADINFO += "|\t" + (i + 1) + "." + "THREAD No. " + i + " IS NULL! \t|";
+                                THREADINFO += "|\t" + i + "." + "THREAD No. " + i + " IS NULL! \t|";
                             else if (!thread_List[i].IsAlive)
-                                THREADINFO += "|\t" + (i + 1) + "." + thread_List[i].Name + " IS NOT ALIVE! \t|";
+                                THREADINFO += "|\t" + i + "." + thread_List[i].Name + " IS NOT ALIVE! \t|";
                             //else if (thread_List[i].ThreadState != System.Threading.ThreadState.Running)
                             //    Console.WriteLine($"thread_List[i].ThreadState != System.Threading.ThreadState.Running ? { thread_List[i].ThreadState != System.Threading.ThreadState.Running};");
                             else if (thread_List[i].ThreadState == System.Threading.ThreadState.Aborted)
-                                THREADINFO += "|\t" + (i + 1) + "." + thread_List[i].Name + " IS ABORTED! \t|";
+                                THREADINFO += "|\t" + i + "." + thread_List[i].Name + " IS ABORTED! \t|";
                             else
                             {
-                                THREADINFO += "|\t" + (i + 1) + "." + thread_List[i].Name + "'s STATE IS SOMETHING ELSE, BUT NOT ALIVE! \t|";
+                                THREADINFO += "|\t" + i + "." + thread_List[i].Name + "'s STATE IS SOMETHING ELSE, BUT NOT ALIVE! \t|";
                             }
                             SpcData spcData1 = new SpcData();
                             spcData1.setSqlFields(gloVar.sqlConn);
@@ -73,14 +86,16 @@ namespace THPData
                         }
                         else
                         {
-                            THREADINFO += "|\t" + (i + 1) + "." + thread_List[i].Name + " IS ALIVE! \t|";
+                            THREADINFO += "|\t" + i + "." + thread_List[i].Name + " IS ALIVE! \t|";
                         }
                         System.Threading.Thread.Sleep(1000);
                     }
                     catch (Exception)
                     {
                     }
+                    i += 1;
                 }
+                i = 0;
                 Console.WriteLine(" " + THREADINFO + " ");
                 System.Threading.Thread.Sleep(60000);
                 Console.WriteLine("---------------------- DATA COLLECTION SUCCESSFUL ----------------------");
@@ -110,15 +125,15 @@ namespace THPData
 
                     if (connected)
                     {
-                        spcData.consolePrintText += "Connected. Reading... ";
-                        while (spcData.d == null || spcData.d[22] != -1)
+                        //spcData.consolePrintText += "Connected. Reading... ";
+                        while (spcData.d == null || spcData.d.Length < 23 || spcData.d[22] != -1)
                             spcData.d = gloVar.modbusClient_List[index].ReadInputRegisters(0, 38);
                     }
                     else
                     {
 
                         retryCounter += 1;
-                        spcData.consolePrintText += "Couldn't connect. ";
+                        spcData.consolePrintText += "Client Connection Failed. ";
                         if (retryCounter > 5)
                             break;
                     }
@@ -126,6 +141,8 @@ namespace THPData
 
                     if (spcData.d != null && spcData.d.Length >= 38)
                     {
+                        if (spcData.cycleResetSecond != spcData.d[17])
+                            spcData.cycleResetSecond = spcData.d[17];
                         spcData.DateAndTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
 
                         spcData.sTime = $"20{spcData.d[12].ToString("D2")}-{spcData.d[13].ToString("D2")}-{spcData.d[14].ToString("D2")} {spcData.d[15].ToString("D2")}:{spcData.d[16].ToString("D2")}:{spcData.d[17].ToString("D2")}.000";
@@ -177,14 +194,14 @@ namespace THPData
                     }
                     else
                     {
-                        Console.WriteLine(" " + spcData.consolePrintText + " No data?");
+                        Console.WriteLine(" " + spcData.consolePrintText + " Couldn't Read Any Data.");
                     }
 
                     gloVar.modbusClient_List[index].Disconnect();
                     spcData.d = null;
                     System.Threading.Thread.Sleep(1000);
 
-                    while (DateTime.Now.Second != 0 && counter == 1)
+                    while (DateTime.Now.Second != (spcData.cycleResetSecond + 1) && counter == 1)
                     {
                         System.Threading.Thread.Sleep(500);
                     }

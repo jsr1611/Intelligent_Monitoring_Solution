@@ -14,7 +14,8 @@ namespace THPData
         public int dID { get; set; }
         public bool insertDB_OK { get; set; }
         public int[] d { get; set; }
-        public DateTime timeNow { get; set; }
+        public DateTime timeNow { get; set; } 
+        public int cycleResetSecond { get; set; }
 
         public string dID_long { get; set; }
         public string sTime { get; set; }
@@ -77,7 +78,7 @@ namespace THPData
         public void SetData(GlobalVariables gloVar, int sensorId, string sensorCategory)
         {
             if (gloVar.sanghanHahanColumns == null || gloVar.sanghanHahanColumns.Count == 0)
-                gloVar.sanghanHahanColumns = GetTableColumnNames(gloVar, gloVar.sanghanHahanTable);
+                gloVar.sanghanHahanColumns = GetTableColumnNames(gloVar, gloVar.sanghanHahanTable).ToList();
 
             if (gloVar.sanghanHahanColumns.Count == 0)
             {
@@ -117,7 +118,7 @@ namespace THPData
                 }
                 sqlRdr.Close();
                 sqlCmd.Dispose();
-                
+
             }
 
         }
@@ -134,10 +135,9 @@ namespace THPData
         /// <param name="gloVar">GlobalVariables Object instance </param>
         /// <param name="tableName">table명</param>
         /// <returns>gloVar.sanghanHahanColumns List of string values.</returns>
-        public List<string> GetTableColumnNames(GlobalVariables gloVar, string tableName)
+        public string[] GetTableColumnNames(GlobalVariables gloVar, string tableName)
         {
-            if (gloVar.sanghanHahanColumns == null)
-                gloVar.sanghanHahanColumns = new List<string>();
+            
             try
             {
                 CheckSqlConnAndCmd(gloVar);
@@ -146,7 +146,7 @@ namespace THPData
                 dview = dtbl.DefaultView;
                 dview.Sort = "ORDINAL_POSITION ASC";
                 dtbl = dview.ToTable();
-                gloVar.sanghanHahanColumns = dtbl.AsEnumerable().Select(x => x.Field<string>("COLUMN_NAME")).ToList();
+                gloVar.DevTbColumns = dtbl.AsEnumerable().Select(x => x.Field<string>("COLUMN_NAME")).ToArray();
 
             }
             catch (System.Exception ex)
@@ -156,7 +156,7 @@ namespace THPData
 
             sqlCmd.Dispose();
 
-            return gloVar.sanghanHahanColumns;
+            return gloVar.DevTbColumns;
         }
 
 
@@ -398,39 +398,37 @@ namespace THPData
                     sqlCmd.CommandType = CommandType.Text;
                     sqlCmd.CommandText = sqlCmdText;
                     //mutex_lock.WaitOne();
+                    sqlCmd.Transaction = transaction;
                     if (sqlCmd.CommandText.Length > 0)
                     {
-                        sqlCmd.Transaction = transaction;
-                        //if (!DataAlreadyExists(gloVar, dID, DateAndTime))
-                        //{
                         sqlCmd.ExecuteNonQuery();
                         transaction.Commit();
                         res = true;
-                        //}
-                        //else
-                        //{
-                        //    txt = " 중복 ";
-                        //}
+                    }
+                    else
+                    {
+                        Console.WriteLine("sqlCmd.CommandText.Length = 0. Now rolling back transaction.");
+                        transaction.Rollback();
                     }
                     //mutex_lock.ReleaseMutex();
 
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("\n" + ex.Message + ex.StackTrace);
+                    Console.WriteLine("\n DB Insert Exception. ID: " + dID + ". Now Rolling Back." + ex.Message + ex.StackTrace);
                     try
                     {
                         transaction.Rollback();
                     }
                     catch (Exception ex2)
                     {
-                        Console.WriteLine("\n" + ex2.Message + ex2.StackTrace);
+                        Console.WriteLine("\n DB Transaction RollBack Exception. ID: " + dID + ". " + ex2.Message + ex2.StackTrace);
                     }
 
                 }
                 finally
                 {
-                    sqlConn.Close();
+                    //sqlConn.Close();
                     //sqlConn.Dispose();
                     transaction.Dispose();
                 }
