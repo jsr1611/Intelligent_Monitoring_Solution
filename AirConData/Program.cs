@@ -11,18 +11,29 @@ namespace AirConData
 
         static void Main(string[] args)
         {
-            Console.Write("Program started.\n");
             GlobalVariables gloVar = new GlobalVariables();
 
-            gloVar.dbName = "AIRCONDATA";
+            // ini 읽기 //
+            IniFile ini = new IniFile();
+            ini.Load(AppInfo.StartupPath + "\\" + "Setting.ini");
+            string program_title = ini["PROGRAM"]["TITLE"].ToString();
+            Console.Title = program_title;    // Program title on top-left side of the window
+            string D_SERVERNAME = ini["DBSetting"]["SERVERNAME"].ToString();
+            string D_NAME = ini["DBSetting"]["DBNAME"].ToString();
+            string D_ID = ini["DBSetting"]["ID"].ToString();
+            string D_PW = ini["DBSetting"]["PW"].ToString();
+
+
+            Console.WriteLine($"############ {program_title} has started. ############");
+
+
+            gloVar.dbName = D_NAME; 
             gloVar.dataTable = gloVar.dbName[0] + "_DATATABLE";
-            gloVar.dbUID = "dlitdb";
-            gloVar.dbPWD = "dlitdb";
-            gloVar.dbServerName = "localhost";
+            gloVar.dbUID = D_ID;
+            gloVar.dbPWD = D_PW;
+            gloVar.dbServerName = D_SERVERNAME; 
             gloVar.sqlConn = new System.Data.SqlClient.SqlConnection();
             gloVar.sqlConStr = $@"Data Source={gloVar.dbServerName};Initial Catalog={gloVar.dbName};User id={gloVar.dbUID};Password={gloVar.dbPWD};Integrated Security=True";
-
-
 
 
             gloVar.ID_List = new int[] { 1, 2, 3, 4, 5, 6 };

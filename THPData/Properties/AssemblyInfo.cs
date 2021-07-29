@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("THPData")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("IMS THPC")]
+[assembly: AssemblyDescription("Temperature, Humidity, and Particle Data Collection Application")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("DLIT Inc.")]
-[assembly: AssemblyProduct("THPData")]
+[assembly: AssemblyProduct("IMS THP")]
 [assembly: AssemblyCopyright("Copyright © DLIT Inc. 2021")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
