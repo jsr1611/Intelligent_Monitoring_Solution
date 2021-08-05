@@ -12,10 +12,12 @@ namespace THPData
 
         public string DateAndTime { get; set; }
         public int dID { get; set; }
+        public bool data_OK { get; set; }
         public bool insertDB_OK { get; set; }
         public int[] d { get; set; }
         public DateTime timeNow { get; set; } 
         public int cycleResetSecond { get; set; }
+        
 
         public string dID_long { get; set; }
         public string sTime { get; set; }
@@ -154,7 +156,7 @@ namespace THPData
                 Console.WriteLine($"Error in getting column names for table: {tableName}. \n" + ex.Message + ex.StackTrace);
             }
 
-            sqlCmd.Dispose();
+            //sqlCmd.Dispose();
 
             return gloVar.DevTbColumns;
         }
@@ -223,6 +225,8 @@ namespace THPData
 
         public void Clear()
         {
+            //DateAndTime = string.Empty;
+            insertDB_OK = false;
             dID_long = string.Empty;
             sTime = string.Empty;
             sTemperature = string.Empty;
@@ -254,6 +258,11 @@ namespace THPData
             duplicate = false;
             consolePrintText = string.Empty;
 
+        }
+
+        internal SpcData Copy()
+        {
+            throw new NotImplementedException();
         }
 
 

@@ -9,7 +9,7 @@ namespace THPData
     {
         static void Main(string[] args)
         {
-            
+
             GlobalVariables gloVar = new GlobalVariables();
 
             // ini 읽기 //////
@@ -27,7 +27,7 @@ namespace THPData
 
 
 
-            gloVar.dbName = D_NAME; 
+            gloVar.dbName = D_NAME;
             gloVar.dataTable = gloVar.dbName[0] + "_DATATABLE";
             gloVar.deviceTable = gloVar.dbName[0] + "_DEVICES";
             gloVar.dbUID = D_ID;
@@ -37,7 +37,7 @@ namespace THPData
 
             gloVar.sqlConn = new SqlConnection();
             gloVar.sqlConStr = $@"Data Source={gloVar.dbServerName};Initial Catalog={gloVar.dbName};User id={gloVar.dbUID};Password={gloVar.dbPWD};Integrated Security=False; MultipleActiveResultSets=True";
-            
+
 
             SpcData spcData = new SpcData();
 
@@ -49,6 +49,7 @@ namespace THPData
             gloVar.sqlCmdText = $"SELECT {gloVar.DevTbColumns[6]} FROM [{gloVar.dbName}].[dbo].[{gloVar.deviceTable}] WHERE {gloVar.DevTbColumns[gloVar.DevTbColumns.Length - 1]} = 'YES' ORDER BY {gloVar.DevTbColumns[0]} ASC";
             gloVar.Port_List = Array.ConvertAll(spcData.GetColumnDataAsList(gloVar, "string", "sPortNumber", gloVar.sqlCmdText).ToArray(), s => int.Parse(s));
             gloVar.modbusClient_List = new ModbusClient[gloVar.ID_List.Length];
+            gloVar.bad_clientFlag_List = new bool[gloVar.ID_List.Length];
             System.Threading.Thread[] thread_List = new System.Threading.Thread[gloVar.ID_List.Length];
             string THREADINFO = string.Empty;
 
@@ -63,11 +64,9 @@ namespace THPData
                         {
 
                             if (thread_List[i] == null)
-                                THREADINFO += "|\t" + i + "." + "THREAD No. " + i + " IS NULL! \t|";
+                                THREADINFO += "|\t" + i + "." + "THREAD " + i + " IS NULL! \t|";
                             else if (!thread_List[i].IsAlive)
                                 THREADINFO += "|\t" + i + "." + thread_List[i].Name + " IS NOT ALIVE! \t|";
-                            //else if (thread_List[i].ThreadState != System.Threading.ThreadState.Running)
-                            //    Console.WriteLine($"thread_List[i].ThreadState != System.Threading.ThreadState.Running ? { thread_List[i].ThreadState != System.Threading.ThreadState.Running};");
                             else if (thread_List[i].ThreadState == System.Threading.ThreadState.Aborted)
                                 THREADINFO += "|\t" + i + "." + thread_List[i].Name + " IS ABORTED! \t|";
                             else
@@ -76,22 +75,22 @@ namespace THPData
                             }
                             SpcData spcData1 = new SpcData();
                             spcData1.setSqlFields(gloVar.sqlConn);
-                            //Console.WriteLine($" \nStartProgram(spcData1, gloVar, i) index = {i} ");
                             thread_List[i] = new System.Threading.Thread(() => StartProgram(spcData1, gloVar, i));
 
                             if (thread_List[i].Name == null || thread_List[i].Name.Length == 0)
-                                thread_List[i].Name = "THREAD No. " + i;
+                                thread_List[i].Name = "THREAD " + i;
                             thread_List[i].IsBackground = true;
                             thread_List[i].Start();
                         }
                         else
                         {
-                            THREADINFO += "|\t" + i + "." + thread_List[i].Name + " IS ALIVE! \t|";
+                            //THREADINFO += "|\t" + i + "." + thread_List[i].Name + " IS ALIVE! \t|";
                         }
                         System.Threading.Thread.Sleep(1000);
                     }
-                    catch (Exception)
+                    catch (Exception e)
                     {
+                        Console.WriteLine(e.ToString());
                     }
                     i += 1;
                 }
@@ -107,122 +106,203 @@ namespace THPData
 
         private static void StartProgram(SpcData spcData, GlobalVariables gloVar, int index)
         {
+            if (gloVar.ID_List == null || gloVar.ID_List.Length <= index)
+                return;
+
             spcData.consolePrintText += $"THD {index} started. ";
-            bool connected; // = false;
-            int counter = 0;
-            int retryCounter = 0;
+            bool connected;
+            int connRetryCounter = 0;
+            int readRetryCounter = 0;
+            bool oldDataExists = false;
+
+            SpcData oldData = new SpcData();
+            spcData.dID = gloVar.ID_List[index];
+            oldData.dID = gloVar.ID_List[index];
+            spcData.SetData(gloVar, spcData.dID, "particle");
+            oldData.SetData(gloVar, spcData.dID, "particle");
+            //spcData.consolePrintText += spcData.printUsage() + ".\n";
+            spcData.DateAndTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
             try
             {
-                spcData.dID = gloVar.ID_List[index];
-                spcData.SetData(gloVar, spcData.dID, "particle");
-                spcData.consolePrintText += spcData.printUsage() + ".\n";
                 while (true)
                 {
-                    //spcData.timeNow = DateTime.Now;
-                    counter += 1;
+                    spcData.timeNow = DateTime.Now;
+                    if (spcData.consolePrintText.Length != 0)
+                        spcData.consolePrintText = string.Empty;
+                    spcData.data_OK = false;
                     connected = false;
                     connected = connect(gloVar, index);
 
                     if (connected)
                     {
-                        //spcData.consolePrintText += "Connected. Reading... ";
-                        while (spcData.d == null || spcData.d.Length < 23 || spcData.d[22] != -1)
-                            spcData.d = gloVar.modbusClient_List[index].ReadInputRegisters(0, 38);
-                    }
-                    else
-                    {
+                        while (spcData.d == null || spcData.d.Length < 38 || spcData.d[22] != -1)
+                        {
+                            if (spcData.d != null)
+                                System.Threading.Thread.Sleep(TimeSpan.FromSeconds(1));
+                            readRetryCounter += 1;
+                            if (!gloVar.modbusClient_List[index].Connected || readRetryCounter > 5)
+                            {
+                                if (readRetryCounter > 5)
+                                {
+                                    gloVar.bad_clientFlag_List[index] = true;
+                                    readRetryCounter = 0;
+                                }
+                                connected = connect(gloVar, index);
+                            }
+                            try
+                            {
 
-                        retryCounter += 1;
-                        spcData.consolePrintText += "Client Connection Failed. ";
-                        if (retryCounter > 5)
-                            break;
-                    }
+                                spcData.d = gloVar.modbusClient_List[index].ReadInputRegisters(0, 38);
+
+                                Console.Write($"\n\n 시간: {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")}(old:{spcData.DateAndTime}). ({(DateTime.Now - spcData.timeNow).TotalSeconds.ToString("F")}초), sensorID: {gloVar.ID_List[index]}, NEW DATA : ");
+                                //위 while문을 나가는 조건이 spcDaa.data_OK 속성을 true로 만듭니다.
+                                for (int k = 0; k < spcData.d.Length - 20; k++)
+                                {
+                                    Console.Write(" " + spcData.d[k] + " ");
+                                }
+                                Console.WriteLine();
+                            }
+                            catch (Exception e)
+                            {
+                                Console.WriteLine(e.ToString());
+                                gloVar.bad_clientFlag_List[index] = true;
+                                readRetryCounter = 0;
+                            }
+
+                            if ((DateTime.Now - spcData.timeNow).TotalSeconds >= 50 && oldDataExists)
+                            {
+                                Console.WriteLine($"\n + BREAK LOOP for sID: {spcData.dID} + \n");
+                                break;
+                            }
+
+                        }
+
+                        if (spcData.d != null && spcData.d.Length >= 38 && spcData.d[22] == -1)
+                        {
+                            spcData.DateAndTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+
+                            readRetryCounter = 0;
+                            connRetryCounter = 0;
+
+                            spcData.data_OK = true;
 
 
-                    if (spcData.d != null && spcData.d.Length >= 38)
-                    {
-                        if (spcData.cycleResetSecond != spcData.d[17])
-                            spcData.cycleResetSecond = spcData.d[17];
-                        spcData.DateAndTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+                            if ((spcData.cycleResetSecond - 3) != spcData.d[17])
+                            {      // 다음 수집 시간을 센서의 원래 측정시간 +1 초로 세팅함.
+                                spcData.cycleResetSecond = (spcData.d[17] + 3)  >= 60 ? (spcData.d[17] + 3) - 60 : (spcData.d[17] + 3);
+                                oldData.cycleResetSecond = (spcData.d[17] + 3) >= 60 ? (spcData.d[17] + 3) - 60 : (spcData.d[17] + 3);
+                            }
+                            oldDataExists = true;
 
-                        spcData.sTime = $"20{spcData.d[12].ToString("D2")}-{spcData.d[13].ToString("D2")}-{spcData.d[14].ToString("D2")} {spcData.d[15].ToString("D2")}:{spcData.d[16].ToString("D2")}:{spcData.d[17].ToString("D2")}.000";
-                        spcData.dID_long = $"{(char)spcData.d[0]}{(char)spcData.d[1]}-{(char)spcData.d[2]}{(char)spcData.d[3]}-{(char)spcData.d[4]}{(char)spcData.d[5]}-{(char)spcData.d[6]}{(char)spcData.d[7]}-{(char)spcData.d[8]}{(char)spcData.d[9]}-{(char)spcData.d[10]}{(char)spcData.d[11]}";
-                        spcData.sTemperature = $"{spcData.d[18].ToString("D2")}.{spcData.d[19].ToString("D2")}";
-                        spcData.sHumidity = $"{spcData.d[20].ToString("D2")}.{spcData.d[21].ToString("D2")}";
+                            preprocessData(spcData);
+                            oldData.d = spcData.d;
+                            preprocessData(oldData);
 
+                            spcData.consolePrintText += "시간: " + spcData.DateAndTime + $"({oldData.DateAndTime}) , ID:" + spcData.dID + ", " + spcData.ToString();
+                            oldData.consolePrintText = "시간: " + oldData.DateAndTime + ", ID:" + oldData.dID + ", " + oldData.ToString();
+                            oldData.DateAndTime = spcData.DateAndTime;
+                        }
 
-                        spcData.highValue = spcData.d[24] >= 0 ? spcData.d[24] : 65536 + spcData.d[24];
-                        spcData.lowValue = spcData.d[25] >= 0 ? spcData.d[25] : 65536 + spcData.d[25];
-                        spcData.sParticle03 = (spcData.highValue == 65535 && spcData.lowValue == 65535) ? "-1" : (spcData.highValue * 65536 + spcData.lowValue).ToString();
+                        if (!spcData.data_OK && (DateTime.Now - spcData.timeNow).TotalSeconds >= 50)
+                        {
+                            oldData.DateAndTime = Convert.ToDateTime(oldData.DateAndTime).AddMinutes(1).ToString("yyyy-MM-dd HH:mm:ss.fff");
+                            Console.WriteLine($"\n{spcData.data_OK}, (cycleResetSecond:{spcData.cycleResetSecond}, Now: {DateTime.Now.Second}\n");
+                            spcData.insertDB_OK = oldData.StoreDataToDB(gloVar);
 
-                        spcData.highValue = spcData.d[26] >= 0 ? spcData.d[26] : 65536 + spcData.d[26];
-                        spcData.lowValue = spcData.d[27] >= 0 ? spcData.d[27] : 65536 + spcData.d[27];
-                        spcData.sParticle05 = (spcData.highValue == 65535 && spcData.lowValue == 65535) ? "-1" : (spcData.highValue * 65536 + spcData.lowValue).ToString();
+                            oldData.consolePrintText = "시간: " + oldData.DateAndTime + ", ID:" + oldData.dID + ", " + oldData.ToString();
+                            spcData.consolePrintText = (oldData.consolePrintText + "(기존데이터)");
+                        }
+                        else
+                        {
+                            spcData.insertDB_OK = spcData.StoreDataToDB(gloVar);
+                        }
+                        spcData.data_OK = true;
+                        oldData.data_OK = true;
 
-                        spcData.highValue = spcData.d[28] >= 0 ? spcData.d[28] : 65536 + spcData.d[28];
-                        spcData.lowValue = spcData.d[29] >= 0 ? spcData.d[29] : 65536 + spcData.d[29];
-                        spcData.sParticle10 = (spcData.highValue == 65535 && spcData.lowValue == 65535) ? "-1" : (spcData.highValue * 65536 + spcData.lowValue).ToString();
-
-                        spcData.highValue = spcData.d[32] >= 0 ? spcData.d[32] : 65536 + spcData.d[32];
-                        spcData.lowValue = spcData.d[33] >= 0 ? spcData.d[33] : 65536 + spcData.d[33];
-                        spcData.sParticle50 = (spcData.highValue == 65535 && spcData.lowValue == 65535) ? "-1" : (spcData.highValue * 65536 + spcData.lowValue).ToString();
-
-                        spcData.highValue = spcData.d[34] >= 0 ? spcData.d[34] : 65536 + spcData.d[34];
-                        spcData.lowValue = spcData.d[35] >= 0 ? spcData.d[35] : 65536 + spcData.d[35];
-                        spcData.sParticle100 = (spcData.highValue == 65535 && spcData.lowValue == 65535) ? "-1" : (spcData.highValue * 65536 + spcData.lowValue).ToString();
-
-                        spcData.highValue = spcData.d[36] >= 0 ? spcData.d[36] : 65536 + spcData.d[36];
-                        spcData.lowValue = spcData.d[37] >= 0 ? spcData.d[37] : 65536 + spcData.d[37];
-                        spcData.sParticle250 = (spcData.highValue == 65535 && spcData.lowValue == 65535) ? "-1" : (spcData.highValue * 65536 + spcData.lowValue).ToString();
-
-
-
-                        spcData.insertDB_OK = spcData.StoreDataToDB(gloVar);
-
-                        spcData.consolePrintText += "시간: " + spcData.DateAndTime + ", ID:" + spcData.dID + ", ";
-
-                        spcData.consolePrintText += spcData.ToString();
                         if (spcData.insertDB_OK)
                             spcData.consolePrintText += " dbInsert_OK. ";
                         else
                             spcData.consolePrintText += " dbInsert_NG. ";
                         Console.WriteLine(" " + spcData.consolePrintText + " ");
-                        spcData.Clear();
-                        spcData.DateAndTime = string.Empty;
-                        spcData.insertDB_OK = false;
+                        spcData.Clear();        // object 재사용을 위해서 기존값을 초기화 시킵니다.
 
                     }
                     else
                     {
-                        Console.WriteLine(" " + spcData.consolePrintText + " Couldn't Read Any Data.");
+                        connRetryCounter += 1;
+                        spcData.consolePrintText += "Client Connection Failed. ";
+                        if (connRetryCounter > 5)
+                            gloVar.bad_clientFlag_List[index] = true;           // modbusClient 연결이 안되는 횟수가 5개 이상이 되는 조건이
+                                                                                // modbusClient Object가 쓸수없는 형태임을 나타냄.
                     }
 
                     gloVar.modbusClient_List[index].Disconnect();
                     spcData.d = null;
-                    System.Threading.Thread.Sleep(1000);
+                    System.Threading.Thread.Sleep(500);
 
-                    while (DateTime.Now.Second != (spcData.cycleResetSecond + 1) && counter == 1)
+                    // spcData.data_OK == false, 또한 정상적인 데이터가 안들어왔었다라는 의미임로
+                    // 다음 수집을 1분후에 실행하지 말고 'spcData.data_OK = true' 줄을 만날때까지 수집을 실행합니다.
+
+                    while (spcData.data_OK)
                     {
                         System.Threading.Thread.Sleep(500);
+                        if (DateTime.Now.Second == spcData.cycleResetSecond)
+                            break;
                     }
-                    counter = 0;
+
 
                 }
             }
             catch (Exception ex)
             {
+                gloVar.bad_clientFlag_List[index] = true;
                 Console.WriteLine($"Error in reading data. index: {index}" + ex.Message + ex.StackTrace);
             }
+        }
+
+        private static void preprocessData(SpcData spcData)
+        {
+            spcData.sTime = $"20{spcData.d[12].ToString("D2")}-{spcData.d[13].ToString("D2")}-{spcData.d[14].ToString("D2")} {spcData.d[15].ToString("D2")}:{spcData.d[16].ToString("D2")}:{spcData.d[17].ToString("D2")}.000";
+            spcData.dID_long = $"{(char)spcData.d[0]}{(char)spcData.d[1]}-{(char)spcData.d[2]}{(char)spcData.d[3]}-{(char)spcData.d[4]}{(char)spcData.d[5]}-{(char)spcData.d[6]}{(char)spcData.d[7]}-{(char)spcData.d[8]}{(char)spcData.d[9]}-{(char)spcData.d[10]}{(char)spcData.d[11]}";
+            spcData.sTemperature = $"{spcData.d[18].ToString("D2")}.{spcData.d[19].ToString("D2")}";
+            spcData.sHumidity = $"{spcData.d[20].ToString("D2")}.{spcData.d[21].ToString("D2")}";
+
+
+            spcData.highValue = spcData.d[24] >= 0 ? spcData.d[24] : 65536 + spcData.d[24];
+            spcData.lowValue = spcData.d[25] >= 0 ? spcData.d[25] : 65536 + spcData.d[25];
+            spcData.sParticle03 = (spcData.highValue == 65535 && spcData.lowValue == 65535) ? "-1" : (spcData.highValue * 65536 + spcData.lowValue).ToString();
+
+            spcData.highValue = spcData.d[26] >= 0 ? spcData.d[26] : 65536 + spcData.d[26];
+            spcData.lowValue = spcData.d[27] >= 0 ? spcData.d[27] : 65536 + spcData.d[27];
+            spcData.sParticle05 = (spcData.highValue == 65535 && spcData.lowValue == 65535) ? "-1" : (spcData.highValue * 65536 + spcData.lowValue).ToString();
+
+            spcData.highValue = spcData.d[28] >= 0 ? spcData.d[28] : 65536 + spcData.d[28];
+            spcData.lowValue = spcData.d[29] >= 0 ? spcData.d[29] : 65536 + spcData.d[29];
+            spcData.sParticle10 = (spcData.highValue == 65535 && spcData.lowValue == 65535) ? "-1" : (spcData.highValue * 65536 + spcData.lowValue).ToString();
+
+            spcData.highValue = spcData.d[32] >= 0 ? spcData.d[32] : 65536 + spcData.d[32];
+            spcData.lowValue = spcData.d[33] >= 0 ? spcData.d[33] : 65536 + spcData.d[33];
+            spcData.sParticle50 = (spcData.highValue == 65535 && spcData.lowValue == 65535) ? "-1" : (spcData.highValue * 65536 + spcData.lowValue).ToString();
+
+            spcData.highValue = spcData.d[34] >= 0 ? spcData.d[34] : 65536 + spcData.d[34];
+            spcData.lowValue = spcData.d[35] >= 0 ? spcData.d[35] : 65536 + spcData.d[35];
+            spcData.sParticle100 = (spcData.highValue == 65535 && spcData.lowValue == 65535) ? "-1" : (spcData.highValue * 65536 + spcData.lowValue).ToString();
+
+            spcData.highValue = spcData.d[36] >= 0 ? spcData.d[36] : 65536 + spcData.d[36];
+            spcData.lowValue = spcData.d[37] >= 0 ? spcData.d[37] : 65536 + spcData.d[37];
+            spcData.sParticle250 = (spcData.highValue == 65535 && spcData.lowValue == 65535) ? "-1" : (spcData.highValue * 65536 + spcData.lowValue).ToString();
+
         }
 
         private static bool connect(GlobalVariables gloVar, int index)
         {
             try
             {
-                if (gloVar.modbusClient_List[index] == null)
+                if (gloVar.modbusClient_List[index] == null || gloVar.bad_clientFlag_List[index] == true)
                 {
                     gloVar.modbusClient_List[index] = new ModbusClient(gloVar.IPAddress_List[index], gloVar.Port_List[index]);
                     gloVar.modbusClient_List[index].UnitIdentifier = (byte)gloVar.ID_List[index];
+                    gloVar.bad_clientFlag_List[index] = false;
                 }
 
                 if (!gloVar.modbusClient_List[index].Connected)

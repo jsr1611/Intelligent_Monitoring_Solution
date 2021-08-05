@@ -10,6 +10,7 @@ namespace CommonClassLibrary
         // Client 관련 변수들의 선언
         public string[] COMPort_List { get; set; }
         public ModbusClient[] modbusClient_List { get; set; }
+        public bool[] bad_clientFlag_List { get; set; }
         public int[] ID_List { get; set; } 
         public int[] Port_List { get; set; }
         public string[] IPAddress_List { get; set; } 
