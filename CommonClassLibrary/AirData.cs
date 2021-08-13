@@ -1,7 +1,6 @@
-﻿using CommonClassLibrary;
-using System;
+﻿using System;
 
-namespace AirConData
+namespace CommonClassLibrary 
 {
     public class AirData
     {

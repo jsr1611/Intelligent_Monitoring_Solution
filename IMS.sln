@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "THPData", "THPData\THPData.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DXApplicationViewer", "DXApplicationViewer\DXApplicationViewer.csproj", "{3350C2C3-CDA8-4872-ACE0-142E59CE831D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AirConDashboard", "AirConDashboard\AirConDashboard.csproj", "{A8583AEF-9044-481C-AD1E-88FBE591C061}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{3350C2C3-CDA8-4872-ACE0-142E59CE831D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3350C2C3-CDA8-4872-ACE0-142E59CE831D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3350C2C3-CDA8-4872-ACE0-142E59CE831D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A8583AEF-9044-481C-AD1E-88FBE591C061}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A8583AEF-9044-481C-AD1E-88FBE591C061}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A8583AEF-9044-481C-AD1E-88FBE591C061}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A8583AEF-9044-481C-AD1E-88FBE591C061}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

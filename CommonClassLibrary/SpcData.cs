@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
-using CommonClassLibrary;
 
-namespace THPData
+
+namespace CommonClassLibrary 
 {
     public class SpcData
     {
@@ -52,14 +52,14 @@ namespace THPData
         public string sqlDefltCmdText { get; set; }
 
 
-        internal Int64 highValue { get; set; }
-        internal Int64 lowValue { get; set; }
-        private List<string> tbColumns { get; set; }
-        private List<string> sensorTypes { get; set; }
-        private DataTable dtbl { get; set; }
-        private DataView dview { get; set; }
-        private string[] resultingArray { get; set; }
-        private bool duplicate { get; set; }
+        public Int64 highValue { get; set; }
+        public Int64 lowValue { get; set; }
+        public List<string> tbColumns { get; set; }
+        public List<string> sensorTypes { get; set; }
+        public DataTable dtbl { get; set; }
+        public DataView dview { get; set; }
+        public string[] resultingArray { get; set; }
+        public bool duplicate { get; set; }
         public string consolePrintText { get; set; }
 
         public void setSqlFields(SqlConnection sqlConn)
@@ -260,17 +260,12 @@ namespace THPData
 
         }
 
-        internal SpcData Copy()
-        {
-            throw new NotImplementedException();
-        }
-
 
         /// <summary>
         /// Check if SQLConnection is open and SQLCommand is ready to take commandText
         /// </summary>
         /// <param name="gloVar"></param>
-        private void CheckSqlConnAndCmd(GlobalVariables gloVar)
+        public void CheckSqlConnAndCmd(GlobalVariables gloVar)
         {
             if (sqlConn == null)
             {
@@ -490,16 +485,6 @@ namespace THPData
             return duplicate;
 
         }
-
-
-
-
-
-
-
-
-
-
 
 
 
