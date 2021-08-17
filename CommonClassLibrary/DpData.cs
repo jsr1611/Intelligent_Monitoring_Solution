@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 
 namespace PressureData
 {
-    class pData
+    //Dp = Differential pressure (DP100) / 차압 데이터
+    public class DpData
     {
         private int sensorId;
         private string timestamp;
@@ -29,7 +30,7 @@ namespace PressureData
         private bool mmhg_on;
         private bool pascal_on;
         
-        public pData()
+        public DpData()
         {
 
         }

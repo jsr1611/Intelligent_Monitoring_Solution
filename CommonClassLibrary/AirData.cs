@@ -2,6 +2,7 @@
 
 namespace CommonClassLibrary 
 {
+    //Air = 공조시스템 (MEX-150) || 공조시스템 데이터
     public class AirData
     {
 

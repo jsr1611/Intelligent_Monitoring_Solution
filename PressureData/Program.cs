@@ -259,7 +259,7 @@ namespace PressureData
         {
             bool dbInsertOK;
             // -- dp (diff pressure) data object initialization.
-            pData dpData = new pData();
+            DpData dpData = new DpData();
 
             string timestamp_p = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
             dpData.sID = sensorId;
@@ -297,7 +297,7 @@ namespace PressureData
         /// </summary>
         /// <param name="data">수집 데이터</param>
         /// <returns>수집이 잘 되면 true반환함</returns>
-        private static Tuple<bool, string> StoreDataToDB(pData data)
+        private static Tuple<bool, string> StoreDataToDB(DpData data)
         {
             bool res = false;
             string txt = string.Empty;
@@ -442,7 +442,7 @@ namespace PressureData
         /// <param name="sensorId"></param>
         /// <param name="sensorCategory"></param>
         /// <returns></returns>
-        private static pData SetData(pData data, string sensorCategory)
+        private static DpData SetData(DpData data, string sensorCategory)
         {
 
             List<string> tbColumns = gm.GetTableColumnNames(gv, gv.sanghanHahanTable);

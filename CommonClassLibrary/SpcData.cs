@@ -7,6 +7,7 @@ using System.Linq;
 
 namespace CommonClassLibrary 
 {
+    //Spc = Smart particle counter (SPC3000) || 온습도 및 파티클 데이터
     public class SpcData
     {
 
