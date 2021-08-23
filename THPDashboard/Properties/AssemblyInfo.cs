@@ -4,11 +4,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("IMS D")]
-[assembly: AssemblyDescription("IMS Dashboard")]
+[assembly: AssemblyTitle("IMS Dashboard THP")]
+[assembly: AssemblyDescription("온습도 및 파티클 데이터 대시보드")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("DLIT Inc.")]
-[assembly: AssemblyProduct("IMS D")]
+[assembly: AssemblyProduct("IMS Dashboard THP")]
 [assembly: AssemblyCopyright("Copyright © DLIT Inc. 2021")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -28,5 +28,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("0.9.1.1")]
-[assembly: AssemblyFileVersion("0.9.1.1")]
+[assembly: AssemblyVersion("0.9.8.23")]
+[assembly: AssemblyFileVersion("0.9.8.23")]

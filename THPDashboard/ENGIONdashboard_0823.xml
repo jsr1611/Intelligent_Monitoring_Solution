@@ -1,0 +1,201 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--f5af3b80-aef3-11eb-99e7-0800200c9a66-->
+<Dashboard CurrencyCulture="ko-KR">
+  <Title Text="온습도 및 파티클 데이터 대시보드" />
+  <DataSources>
+    <SqlDataSource Name="SQL 데이터 소스 1" ComponentName="dashboardSqlDataSource1">
+      <Connection Name="localhost_SENSORDATA_Connection" ProviderKey="MSSqlServer">
+        <Parameters>
+          <Parameter Name="server" Value="192.168.11.209" />
+          <Parameter Name="database" Value="SENSORDATA" />
+          <Parameter Name="useIntegratedSecurity" Value="False" />
+          <Parameter Name="read only" Value="1" />
+          <Parameter Name="generateConnectionHelper" Value="false" />
+          <Parameter Name="userid" Value="dlitdb" />
+          <Parameter Name="password" Value="dlitdb" />
+        </Parameters>
+      </Connection>
+      <Query Type="StoredProcQuery" Name="IMS_THP">
+        <Parameter Name="@TimeParameter" Type="DevExpress.DataAccess.Expression">(System.Byte, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089)(?몇시간전)</Parameter>
+        <Parameter Name="@FirstTime" Type="DevExpress.DataAccess.Expression">(System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089)(?시작날짜)</Parameter>
+        <Parameter Name="@AfterTime" Type="DevExpress.DataAccess.Expression">(System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089)(?종료날짜)</Parameter>
+        <ProcName>IMS_THP</ProcName>
+      </Query>
+      <ResultSchema>
+        <DataSet Name="SQL 데이터 소스 1">
+          <View Name="IMS_THP">
+            <Field Name="DateAndTime" Type="DateTime" />
+            <Field Name="sID" Type="Int32" />
+            <Field Name="sCode" Type="String" />
+            <Field Name="sDataValue" Type="Decimal" />
+            <Field Name="sLocation" Type="String" />
+            <Field Name="sZone" Type="String" />
+          </View>
+        </DataSet>
+      </ResultSchema>
+      <ConnectionOptions CloseConnection="true" />
+    </SqlDataSource>
+  </DataSources>
+  <Parameters>
+    <Parameter Name="몇시간전" Type="System.Int16, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" Value="0" />
+    <Parameter Name="시작날짜" Value="" />
+    <Parameter Name="종료날짜" Value="" />
+  </Parameters>
+  <Items>
+    <Chart ComponentName="chartDashboardItem1" Name="온도 (°C)" DataSource="dashboardSqlDataSource1" DataMember="IMS_THP" FilterString="[DataItem1] = 'temperature'">
+      <InteractivityOptions IsDrillDownEnabled="true" TargetDimensions="Series" />
+      <DataItems>
+        <Dimension DataMember="DateAndTime" DateTimeGroupInterval="DateHourMinute" DefaultId="DataItem2" />
+        <Dimension DataMember="sLocation" DefaultId="DataItem5" />
+        <Dimension DataMember="sZone" DefaultId="DataItem0" />
+        <Dimension DataMember="sCode" DefaultId="DataItem1" />
+        <Measure DataMember="sDataValue" SummaryType="Min" DefaultId="DataItem3">
+          <NumericFormat FormatType="Number" Unit="Ones" IncludeGroupSeparator="true" />
+        </Measure>
+      </DataItems>
+      <HiddenDimensions>
+        <Dimension DefaultId="DataItem0" />
+        <Dimension DefaultId="DataItem1" />
+      </HiddenDimensions>
+      <SeriesDimensions>
+        <SeriesDimension DefaultId="DataItem5" />
+      </SeriesDimensions>
+      <Arguments>
+        <Argument DefaultId="DataItem2" />
+      </Arguments>
+      <Panes>
+        <Pane Name="창 1">
+          <AxisY Title="온도 (°C)" AlwaysShowZeroLevel="false">
+            <NumericFormat FormatType="Number" Unit="Ones" IncludeGroupSeparator="true" />
+          </AxisY>
+          <Series>
+            <Simple SeriesType="Line">
+              <Value DefaultId="DataItem3" />
+            </Simple>
+          </Series>
+        </Pane>
+      </Panes>
+      <AxisX EnableZooming="true" />
+    </Chart>
+    <Chart ComponentName="chartDashboardItem2" Name="습도 (%)" DataSource="dashboardSqlDataSource1" DataMember="IMS_THP" FilterString="[DataItem0] = 'humidity'">
+      <DataItems>
+        <Dimension DataMember="sLocation" DefaultId="DataItem1" />
+        <Dimension DataMember="sZone" DefaultId="DataItem2" />
+        <Dimension DataMember="DateAndTime" DateTimeGroupInterval="DateHourMinute" DefaultId="DataItem4" />
+        <Dimension DataMember="sCode" DefaultId="DataItem0" />
+        <Measure DataMember="sDataValue" SummaryType="Min" DefaultId="DataItem3">
+          <NumericFormat FormatType="Number" Unit="Ones" IncludeGroupSeparator="true" />
+        </Measure>
+      </DataItems>
+      <HiddenDimensions>
+        <Dimension DefaultId="DataItem2" />
+        <Dimension DefaultId="DataItem0" />
+      </HiddenDimensions>
+      <SeriesDimensions>
+        <SeriesDimension DefaultId="DataItem1" />
+      </SeriesDimensions>
+      <Arguments>
+        <Argument DefaultId="DataItem4" />
+      </Arguments>
+      <Panes>
+        <Pane Name="창 1">
+          <AxisY Title="습도 (%)" AlwaysShowZeroLevel="false">
+            <NumericFormat FormatType="Number" Unit="Ones" IncludeGroupSeparator="true" />
+          </AxisY>
+          <Series>
+            <Simple SeriesType="Line">
+              <Value DefaultId="DataItem3" />
+            </Simple>
+          </Series>
+        </Pane>
+      </Panes>
+      <AxisX EnableZooming="true" />
+    </Chart>
+    <Chart ComponentName="chartDashboardItem3" Name="파티클 (0.3μm)" DataSource="dashboardSqlDataSource1" DataMember="IMS_THP" FilterString="[DataItem1] = 'particle03'">
+      <DataItems>
+        <Dimension DataMember="DateAndTime" DateTimeGroupInterval="DateHourMinute" DefaultId="DataItem3" />
+        <Dimension DataMember="sLocation" DefaultId="DataItem0" />
+        <Dimension DataMember="sCode" DefaultId="DataItem1" />
+        <Dimension DataMember="sZone" DefaultId="DataItem4" />
+        <Measure DataMember="sDataValue" SummaryType="Min" DefaultId="DataItem2">
+          <NumericFormat FormatType="Number" Unit="Ones" IncludeGroupSeparator="true" />
+        </Measure>
+      </DataItems>
+      <HiddenDimensions>
+        <Dimension DefaultId="DataItem1" />
+        <Dimension DefaultId="DataItem4" />
+      </HiddenDimensions>
+      <SeriesDimensions>
+        <SeriesDimension DefaultId="DataItem0" />
+      </SeriesDimensions>
+      <Arguments>
+        <Argument DefaultId="DataItem3" />
+      </Arguments>
+      <Panes>
+        <Pane Name="창 1">
+          <AxisY Title="파티클 (0.3μm)" AlwaysShowZeroLevel="false" />
+          <Series>
+            <Simple SeriesType="Line">
+              <Value DefaultId="DataItem2" />
+            </Simple>
+          </Series>
+        </Pane>
+      </Panes>
+      <AxisX EnableZooming="true" />
+    </Chart>
+    <Chart ComponentName="chartDashboardItem4" Name="파티클 (0.5μm)" DataSource="dashboardSqlDataSource1" DataMember="IMS_THP" FilterString="StartsWith([DataItem1], 'particle05')">
+      <DataItems>
+        <Dimension DataMember="sCode" DefaultId="DataItem1" />
+        <Dimension DataMember="sLocation" DefaultId="DataItem0" />
+        <Dimension DataMember="DateAndTime" DateTimeGroupInterval="DateHourMinute" DefaultId="DataItem2" />
+        <Measure DataMember="sDataValue" SummaryType="Min" DefaultId="DataItem3">
+          <NumericFormat FormatType="Number" Unit="Ones" IncludeGroupSeparator="true" />
+        </Measure>
+      </DataItems>
+      <HiddenDimensions>
+        <Dimension DefaultId="DataItem1" />
+      </HiddenDimensions>
+      <SeriesDimensions>
+        <SeriesDimension DefaultId="DataItem0" />
+      </SeriesDimensions>
+      <Arguments>
+        <Argument DefaultId="DataItem2" />
+      </Arguments>
+      <Panes>
+        <Pane Name="창 1">
+          <AxisY Title="파티클 (0.5μm)" AlwaysShowZeroLevel="false">
+            <NumericFormat FormatType="Number" Unit="Ones" IncludeGroupSeparator="true" />
+          </AxisY>
+          <Series>
+            <Simple SeriesType="Line">
+              <Value DefaultId="DataItem3" />
+            </Simple>
+          </Series>
+        </Pane>
+      </Panes>
+      <AxisX EnableZooming="true" />
+    </Chart>
+  </Items>
+  <ColorScheme>
+    <Entry DataSource="dashboardSqlDataSource1" DataMember="test_new" PaletteIndex="1">
+      <DimensionKeys>
+        <DimensionKey>
+          <Definition DataMember="sLocation" />
+          <Value Type="System.String" Value="C1" />
+        </DimensionKey>
+      </DimensionKeys>
+    </Entry>
+  </ColorScheme>
+  <LayoutTree>
+    <LayoutGroup Orientation="Vertical" Weight="100">
+      <LayoutGroup Weight="50">
+        <LayoutItem DashboardItem="chartDashboardItem1" Weight="49.964862965565707" />
+        <LayoutItem DashboardItem="chartDashboardItem2" Weight="50.035137034434293" />
+      </LayoutGroup>
+      <LayoutGroup Weight="50">
+        <LayoutItem DashboardItem="chartDashboardItem3" Weight="50.105411103302885" />
+        <LayoutItem DashboardItem="chartDashboardItem4" Weight="49.894588896697115" />
+      </LayoutGroup>
+    </LayoutGroup>
+  </LayoutTree>
+</Dashboard>

@@ -8,8 +8,8 @@
     <ProjectGuid>{3350C2C3-CDA8-4872-ACE0-142E59CE831D}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>IMS_D</RootNamespace>
-    <AssemblyName>IMS D</AssemblyName>
+    <RootNamespace>THPDashboard</RootNamespace>
+    <AssemblyName>IMS Dashboard THP</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <IsWebBootstrapper>false</IsWebBootstrapper>
@@ -23,8 +23,8 @@
     <UpdatePeriodically>false</UpdatePeriodically>
     <UpdateRequired>false</UpdateRequired>
     <MapFileExtensions>true</MapFileExtensions>
-    <ApplicationRevision>1</ApplicationRevision>
-    <ApplicationVersion>0.9.1.%2a</ApplicationVersion>
+    <ApplicationRevision>23</ApplicationRevision>
+    <ApplicationVersion>0.9.8.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <PublishWizardCompleted>true</PublishWizardCompleted>
     <BootstrapperEnabled>true</BootstrapperEnabled>
@@ -122,15 +122,6 @@
     <EmbeddedResource Include="ViewerForm1.resx">
       <DependentUpon>ViewerForm1.cs</DependentUpon>
     </EmbeddedResource>
-    <Compile Include="Dashboard1.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Dashboard1.Designer.cs">
-      <DependentUpon>Dashboard1.cs</DependentUpon>
-    </Compile>
-    <EmbeddedResource Include="Dashboard1.resx">
-      <DependentUpon>Dashboard1.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -141,7 +132,6 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
-    <None Include="DXApplicationViewer_TemporaryKey.pfx" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -156,7 +146,9 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Data\" />
+    <Content Include="ENGIONdashboard_0823.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.7.2">

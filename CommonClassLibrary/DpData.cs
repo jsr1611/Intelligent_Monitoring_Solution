@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PressureData
+namespace CommonClassLibrary
 {
     //Dp = Differential pressure (DP100) / 차압 데이터
     public class DpData

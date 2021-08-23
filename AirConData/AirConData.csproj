@@ -86,13 +86,13 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="air-48.ico" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\CommonClassLibrary\CommonClassLibrary.csproj">
       <Project>{4758bbae-f4b7-4f82-891c-36bce36de406}</Project>
       <Name>CommonClassLibrary</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="air-48.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

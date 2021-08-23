@@ -1,0 +1,96 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--f5af3b80-aef3-11eb-99e7-0800200c9a66-->
+<Dashboard CurrencyCulture="ko-KR">
+  <Title Text="차압 데이터 대시보드" />
+  <DataSources>
+    <SqlDataSource Name="SQL 데이터 소스 1" ComponentName="dashboardSqlDataSource1">
+      <Connection Name="localhost_SENSORDATA_Connection" ProviderKey="MSSqlServer">
+        <Parameters>
+          <Parameter Name="server" Value="192.168.11.209" />
+          <Parameter Name="database" Value="SENSORDATA" />
+          <Parameter Name="useIntegratedSecurity" Value="False" />
+          <Parameter Name="read only" Value="1" />
+          <Parameter Name="generateConnectionHelper" Value="false" />
+          <Parameter Name="userid" Value="dlitdb" />
+          <Parameter Name="password" Value="dlitdb" />
+        </Parameters>
+      </Connection>
+      <Query Type="StoredProcQuery" Name="test_pressure">
+        <Parameter Name="@TimeParameter" Type="DevExpress.DataAccess.Expression">(System.Byte, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089)(?몇시간전)</Parameter>
+        <Parameter Name="@FirstTime" Type="DevExpress.DataAccess.Expression">(System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089)(?시작날짜)</Parameter>
+        <Parameter Name="@AfterTime" Type="DevExpress.DataAccess.Expression">(System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089)(?종료날짜)</Parameter>
+        <ProcName>test_pressure</ProcName>
+      </Query>
+      <ResultSchema>
+        <DataSet Name="SQL 데이터 소스 1">
+          <View Name="test_pressure">
+            <Field Name="DateAndTime" Type="DateTime" />
+            <Field Name="sID" Type="Int32" />
+            <Field Name="sCode" Type="String" />
+            <Field Name="sDataValue" Type="Decimal" />
+            <Field Name="sLocation" Type="String" />
+            <Field Name="sZone" Type="String" />
+          </View>
+        </DataSet>
+      </ResultSchema>
+      <ConnectionOptions CloseConnection="true" />
+    </SqlDataSource>
+  </DataSources>
+  <Parameters>
+    <Parameter Name="몇시간전" Type="System.Int16, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" Value="0" />
+    <Parameter Name="시작날짜" Value="" />
+    <Parameter Name="종료날짜" Value="" />
+  </Parameters>
+  <Items>
+    <Chart ComponentName="chartDashboardItem1" Name="" DataSource="dashboardSqlDataSource1" DataMember="test_pressure" FilterString="[DataItem1] = 'mmh2o'">
+      <InteractivityOptions IsDrillDownEnabled="true" TargetDimensions="Series" />
+      <DataItems>
+        <Measure DataMember="sDataValue" SummaryType="Min" DefaultId="DataItem3">
+          <NumericFormat FormatType="Number" Unit="Ones" IncludeGroupSeparator="true" />
+        </Measure>
+        <Dimension DataMember="DateAndTime" DateTimeGroupInterval="DateHourMinute" DefaultId="DataItem2" />
+        <Dimension DataMember="sLocation" DefaultId="DataItem4" />
+        <Dimension DataMember="sZone" DefaultId="DataItem0" />
+        <Dimension DataMember="sCode" DefaultId="DataItem1" />
+      </DataItems>
+      <HiddenDimensions>
+        <Dimension DefaultId="DataItem0" />
+        <Dimension DefaultId="DataItem1" />
+      </HiddenDimensions>
+      <SeriesDimensions>
+        <SeriesDimension DefaultId="DataItem4" />
+      </SeriesDimensions>
+      <Arguments>
+        <Argument DefaultId="DataItem2" />
+      </Arguments>
+      <Panes>
+        <Pane Name="창 1">
+          <AxisY Title="mmAqua" AlwaysShowZeroLevel="false">
+            <NumericFormat FormatType="Number" Unit="Ones" IncludeGroupSeparator="true" />
+          </AxisY>
+          <Series>
+            <Simple SeriesType="Line">
+              <Value DefaultId="DataItem3" />
+            </Simple>
+          </Series>
+        </Pane>
+      </Panes>
+      <AxisX EnableZooming="true" />
+    </Chart>
+  </Items>
+  <ColorScheme>
+    <Entry DataSource="dashboardSqlDataSource1" DataMember="test_new" PaletteIndex="1">
+      <DimensionKeys>
+        <DimensionKey>
+          <Definition DataMember="sLocation" />
+          <Value Type="System.String" Value="C1" />
+        </DimensionKey>
+      </DimensionKeys>
+    </Entry>
+  </ColorScheme>
+  <LayoutTree>
+    <LayoutGroup Orientation="Vertical" Weight="100">
+      <LayoutItem DashboardItem="chartDashboardItem1" Weight="50" />
+    </LayoutGroup>
+  </LayoutTree>
+</Dashboard>

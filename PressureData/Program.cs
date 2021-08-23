@@ -7,13 +7,11 @@ using System.Linq;
 using CommonClassLibrary;
 using EasyModbus;
 
-namespace PressureData
+namespace CommonClassLibrary
 {
     class Program
     {
-
         private static GlobalVariables gv = null;
-        private static GlobalMethods gm = null;
 
 
         /// <summary>
@@ -31,7 +29,6 @@ namespace PressureData
 
             ini.Load(AppInfo.StartupPath + "\\" + "Setting.ini");
 
-            string D_IP = ini["DBSetting"]["IP"].ToString();
             string D_SERVERNAME = ini["DBSetting"]["SERVERNAME"].ToString();
             string D_NAME = ini["DBSetting"]["DBNAME"].ToString();
             string D_ID = ini["DBSetting"]["ID"].ToString();
@@ -41,11 +38,7 @@ namespace PressureData
             ////////////////////////////////////////////////////////
 
 
-            Console.Title = "Pressure Data Collection App";
-
             GlobalVariables globalVariables = new GlobalVariables();
-            GlobalMethods globalMethods = new GlobalMethods();
-            gm = globalMethods;
             gv = globalVariables;
 
             string program_title = ini["PROGRAM"]["TITLE"].ToString();
@@ -85,9 +78,9 @@ namespace PressureData
             }
 
 
-            gv.DevTbColumns = gm.GetTableColumnNames(gv, gv.deviceTable).ToArray();
+            gv.DevTbColumns = GlobalMethods.GetTableColumnNames(gv, gv.deviceTable).ToArray();
             //g.UsageTableColumn_p = GetTableColumnNames(g.UsageTable_p);
-            gv.ID_List = gm.GetSensorIDs(gv).ToArray();
+            gv.ID_List = GlobalMethods.GetSensorIDs(gv).ToArray();
 
             ValueTuple<string, int, int, int> S_TimeoutSettings_p = GetTimeSettings();
             //g.S_RETRYCOUNTER = S_TimeoutSettings_p.Item2;
@@ -170,7 +163,7 @@ namespace PressureData
 
 
             }
-            Console.WriteLine($"\n############ {program_title} has stopped due to the above exception. ############");
+            Console.WriteLine($"\n############ {program_title} has stopped due to the above exception or error. ############");
             Console.WriteLine("\nApplication window will be closed at " + DateTime.Now.AddMinutes(1) + ".\nPlease, check if you have connected the devices properly and you have the right settings in 'Settings.ini' file, and then run the application again. \nThank you!");
             System.Threading.Thread.Sleep(60000);
         }
@@ -444,15 +437,17 @@ namespace PressureData
         /// <returns></returns>
         private static DpData SetData(DpData data, string sensorCategory)
         {
+            if(gv.DevTbColumns == null || gv.DevTbColumns.Length == 0)
+            {
+                gv.DevTbColumns = GlobalMethods.GetTableColumnNames(gv, gv.sanghanHahanTable).ToArray();
+            }
 
-            List<string> tbColumns = gm.GetTableColumnNames(gv, gv.sanghanHahanTable);
-
-            if (tbColumns.Count == 0)
+            if (gv.DevTbColumns.Length == 0)
             {
                 Console.WriteLine($"{gv.sanghanHahanTable} table 존재하지 않거나 다른 에러가 발생했습니다.");
                 return data;
             }
-            string sql_select = $"SELECT {tbColumns[2]}, {tbColumns[7]} FROM [{gv.dbName}].[dbo].[{gv.sanghanHahanTable}] WHERE {tbColumns[0]} = '{sensorCategory}' AND {tbColumns[1]} = {data.sID}";
+            string sql_select = $"SELECT {gv.DevTbColumns[2]}, {gv.DevTbColumns[7]} FROM [{gv.dbName}].[dbo].[{gv.sanghanHahanTable}] WHERE {gv.DevTbColumns[0]} = '{sensorCategory}' AND {gv.DevTbColumns[1]} = {data.sID}";
 
             using (SqlConnection con = new SqlConnection(gv.sqlConStr))
             {
@@ -463,21 +458,21 @@ namespace PressureData
                     {
                         while (r.Read())
                         {
-                            if (r[tbColumns[2]].Equals("hpa"))
+                            if (r[gv.DevTbColumns[2]].Equals("hpa"))
                                 data.check_hpaOn = r.GetString(1).Equals("Yes");
-                            else if (r[tbColumns[2]].Equals("inchh2o"))
+                            else if (r[gv.DevTbColumns[2]].Equals("inchh2o"))
                                 data.check_inchh2oOn = r.GetString(1).Equals("Yes");
-                            else if (r[tbColumns[2]].Equals("inchhg"))
+                            else if (r[gv.DevTbColumns[2]].Equals("inchhg"))
                                 data.check_inchhgOn = r.GetString(1).Equals("Yes");
-                            else if (r[tbColumns[2]].Equals("kpa"))
+                            else if (r[gv.DevTbColumns[2]].Equals("kpa"))
                                 data.check_kpaOn = r.GetString(1).Equals("Yes");
-                            else if (r[tbColumns[2]].Equals("mbar"))
+                            else if (r[gv.DevTbColumns[2]].Equals("mbar"))
                                 data.check_mbarOn = r.GetString(1).Equals("Yes");
-                            else if (r[tbColumns[2]].Equals("mmh2o"))
+                            else if (r[gv.DevTbColumns[2]].Equals("mmh2o"))
                                 data.check_mmh2oOn = r.GetString(1).Equals("Yes");
-                            else if (r[tbColumns[2]].Equals("mmhg"))
+                            else if (r[gv.DevTbColumns[2]].Equals("mmhg"))
                                 data.check_mmhgOn = r.GetString(1).Equals("Yes");
-                            else if (r[tbColumns[2]].Equals("pa"))
+                            else if (r[gv.DevTbColumns[2]].Equals("pa"))
                                 data.check_paOn = r.GetString(1).Equals("Yes");
                         }
                     }
