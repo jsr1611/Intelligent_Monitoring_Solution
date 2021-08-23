@@ -49,7 +49,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="pData.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -58,13 +57,13 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="istockphoto_1133507993_612x612_WX5_icon.ico" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\CommonClassLibrary\CommonClassLibrary.csproj">
       <Project>{4758bbae-f4b7-4f82-891c-36bce36de406}</Project>
       <Name>CommonClassLibrary</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="istockphoto_1133507993_612x612_WX5_icon.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

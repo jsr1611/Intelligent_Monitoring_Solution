@@ -5,19 +5,20 @@ using System.Data.SqlClient;
 using System.Linq;
 
 
-namespace CommonClassLibrary 
+namespace CommonClassLibrary
 {
+    //Spc = Smart particle counter (SPC3000) || 온습도 및 파티클 데이터
     public class SpcData
     {
-
+        public string objName { get; set; }
         public string DateAndTime { get; set; }
         public int dID { get; set; }
         public bool data_OK { get; set; }
         public bool insertDB_OK { get; set; }
         public int[] d { get; set; }
-        public DateTime timeNow { get; set; } 
+        public DateTime timeNow { get; set; }
         public int cycleResetSecond { get; set; }
-        
+
 
         public string dID_long { get; set; }
         public string sTime { get; set; }
@@ -46,7 +47,6 @@ namespace CommonClassLibrary
         public SqlCommand sqlCmd { get; set; }
         public SqlDataReader sqlRdr { get; set; }
         public SqlDataAdapter sqlDAptr { get; set; }
-        public SqlTransaction transaction { get; set; }
         public string sqlConStr { get; set; }
         public string sqlCmdText { get; set; }
         public string sqlDefltCmdText { get; set; }
@@ -79,8 +79,9 @@ namespace CommonClassLibrary
         /// <returns></returns>
         public void SetData(GlobalVariables gloVar, int sensorId, string sensorCategory)
         {
+            
             if (gloVar.sanghanHahanColumns == null || gloVar.sanghanHahanColumns.Count == 0)
-                gloVar.sanghanHahanColumns = GetTableColumnNames(gloVar, gloVar.sanghanHahanTable).ToList();
+                gloVar.sanghanHahanColumns = GlobalMethods.GetTableColumnNames(gloVar, gloVar.sanghanHahanTable).ToList();
 
             if (gloVar.sanghanHahanColumns.Count == 0)
             {
@@ -88,16 +89,14 @@ namespace CommonClassLibrary
             }
             else
             {
-
-
                 //sqlCmdText = $"SELECT DISTINCT {gloVar.sanghanHahanColumns[2]} FROM [{gloVar.dbName}].[dbo].[{gloVar.sanghanHahanTable}] WHERE {gloVar.sanghanHahanColumns[0]} = '{sensorCategory}'";
                 //sensorTypes = GetColumnDataAsList(gloVar, "string", gloVar.sanghanHahanColumns[2], sqlCmdText); // sqlCmdText is used for getting sensorTypes
 
                 sqlCmdText = $"SELECT {gloVar.sanghanHahanColumns[2]}, {gloVar.sanghanHahanColumns[7]} FROM [{gloVar.dbName}].[dbo].[{gloVar.sanghanHahanTable}] WHERE {gloVar.sanghanHahanColumns[0]} = '{sensorCategory}' AND {gloVar.sanghanHahanColumns[1]} = {sensorId}";
 
                 CheckSqlConnAndCmd(gloVar);
-
-
+                
+                sqlCmd.CommandText = sqlCmdText;
                 sqlRdr = sqlCmd.ExecuteReader();
                 while (sqlRdr.Read())
                 {
@@ -131,90 +130,6 @@ namespace CommonClassLibrary
         }
 
 
-        /// <summary>
-        /// 주어진 테이블의 모든 Column명들을 List형태로 반환함.
-        /// </summary>
-        /// <param name="gloVar">GlobalVariables Object instance </param>
-        /// <param name="tableName">table명</param>
-        /// <returns>gloVar.sanghanHahanColumns List of string values.</returns>
-        public string[] GetTableColumnNames(GlobalVariables gloVar, string tableName)
-        {
-            
-            try
-            {
-                CheckSqlConnAndCmd(gloVar);
-                resultingArray = new string[4] { null, null, $"{tableName}", null }; // string[] restrictions = resultingArray
-                dtbl = sqlConn.GetSchema("Columns", resultingArray);
-                dview = dtbl.DefaultView;
-                dview.Sort = "ORDINAL_POSITION ASC";
-                dtbl = dview.ToTable();
-                gloVar.DevTbColumns = dtbl.AsEnumerable().Select(x => x.Field<string>("COLUMN_NAME")).ToArray();
-
-            }
-            catch (System.Exception ex)
-            {
-                Console.WriteLine($"Error in getting column names for table: {tableName}. \n" + ex.Message + ex.StackTrace);
-            }
-
-            //sqlCmd.Dispose();
-
-            return gloVar.DevTbColumns;
-        }
-
-
-
-        /// <summary>
-        /// 테이블 특정 Column의 데이터를 반환함.
-        /// </summary>
-        /// <param name="dataType">데이터 타입: string, int, double</param>
-        /// <param name="sqlStr">SQL쿼리문</param>
-        /// <param name="ColumnName">테이블명</param>
-        /// <returns></returns>
-        public List<string> GetColumnDataAsList(GlobalVariables gloVar, string dataType, string ColumnName, string sqlCmdText)
-        {
-            System.Data.DataSet ds = new System.Data.DataSet();
-            List<string> res = new List<string>();
-
-
-            CheckSqlConnAndCmd(gloVar);
-
-
-
-            if (sqlDAptr == null)
-                sqlDAptr = new System.Data.SqlClient.SqlDataAdapter();
-
-            try
-            {
-                sqlCmd.CommandText = sqlCmdText;
-                sqlDAptr.SelectCommand = sqlCmd;
-                sqlDAptr.Fill(ds);
-                if (dataType.Equals("string"))
-                {
-                    res = ds.Tables[0].AsEnumerable().Select(x => x.Field<string>(ColumnName)).ToList();
-                }
-                else if (dataType.Equals("int"))
-                {
-                    res = ds.Tables[0].AsEnumerable().Select(x => x.Field<int>(ColumnName).ToString()).ToList();
-                }
-                else if (dataType.Equals("double"))
-                {
-                    res = ds.Tables[0].AsEnumerable().Select(x => x.Field<double>(ColumnName).ToString()).ToList();
-                }
-                else
-                {
-
-                    //return res;
-                }
-
-            }
-            catch (System.Exception ex)
-            {
-                Console.WriteLine($"Error getting data as list for table column: {ColumnName}. Error msg: {ex.Message}. {ex.StackTrace}");
-            }
-            sqlDAptr.Dispose();
-            sqlCmd.Dispose();
-            return res;
-        }
 
         /// <summary>
         /// Clears the field values to default as follows:
@@ -257,6 +172,7 @@ namespace CommonClassLibrary
             resultingArray = null;
             duplicate = false;
             consolePrintText = string.Empty;
+            d = null;
 
         }
 
@@ -267,6 +183,8 @@ namespace CommonClassLibrary
         /// <param name="gloVar"></param>
         public void CheckSqlConnAndCmd(GlobalVariables gloVar)
         {
+            try
+            {
             if (sqlConn == null)
             {
                 sqlConn = new System.Data.SqlClient.SqlConnection(gloVar.sqlConStr);
@@ -286,8 +204,21 @@ namespace CommonClassLibrary
             if (sqlCmd == null)
                 sqlCmd = new System.Data.SqlClient.SqlCommand();
 
-            sqlCmd.CommandText = sqlCmdText;
+            //sqlCmd.CommandText = sqlCmdText;
             sqlCmd.Connection = sqlConn;
+            }
+            catch (Exception e)
+            {
+                // ErrorMessage || Exception 정보를 ErrorMsgs테이블에 저장함.
+                try
+                {
+                    GlobalMethods.ErrorMsgCollect(gloVar, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"), e, "DB", "SQL Connection Init", "SQL Conneciton 변수 초기화 시 에러 발생.", dID, gloVar.IPAddress_List[gloVar.ID_List.ToList().IndexOf(dID)], gloVar.Port_List[gloVar.ID_List.ToList().IndexOf(dID)].ToString(), "CheckSqlConnAndCmd(GlobalVariables gloVar)");
+                }
+                catch (Exception ex2)
+                {
+                    Console.WriteLine("\nErrorLog저장 시 에러 발생. \n원래에러: " + ex2.Message + ex2.StackTrace + " ");
+                }
+            }
         }
 
 
@@ -303,12 +234,18 @@ namespace CommonClassLibrary
         {
             bool res = false;
 
-            CheckSqlConnAndCmd(gloVar);
+            
 
 
             if (dID != 0 && DateAndTime.Length != 0 && sTime.Length != 0)
             {
-                transaction = sqlConn.BeginTransaction();
+                //Console.Write("\n Waiting at mutex_lock for " + dID + " THD " + System.Threading.Thread.CurrentThread.Name);
+                gloVar.mutex_lock.WaitOne();
+                //Console.Write("\n Starting mutex_lock for " + dID + " THD " + System.Threading.Thread.CurrentThread.Name);
+                
+                //SQL Connection, SQLCommand, SQl
+                CheckSqlConnAndCmd(gloVar);
+                gloVar.transaction_w = sqlConn.BeginTransaction();
                 try
                 {
 
@@ -398,43 +335,56 @@ namespace CommonClassLibrary
 
 
                     // -----------------DB Insert실행 부분------------->
-
                     sqlCmd.CommandType = CommandType.Text;
                     sqlCmd.CommandText = sqlCmdText;
-                    //mutex_lock.WaitOne();
-                    sqlCmd.Transaction = transaction;
+
+
+                    sqlCmd.Transaction = gloVar.transaction_w;
                     if (sqlCmd.CommandText.Length > 0)
                     {
                         sqlCmd.ExecuteNonQuery();
-                        transaction.Commit();
+                        gloVar.transaction_w.Commit();
                         res = true;
                     }
-                    else
-                    {
-                        Console.WriteLine("sqlCmd.CommandText.Length = 0. Now rolling back transaction.");
-                        transaction.Rollback();
-                    }
-                    //mutex_lock.ReleaseMutex();
 
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("\n DB Insert Exception. ID: " + dID + ". Now Rolling Back." + ex.Message + ex.StackTrace);
+                    //Console.WriteLine("\n DB Insert Exception. ID: " + dID + ". Now Rolling Back." + ex.Message + ex.StackTrace);
+                    // ErrorMessage || Exception 정보를 ErrorMsgs테이블에 저장함.
                     try
                     {
-                        transaction.Rollback();
+                        GlobalMethods.ErrorMsgCollect(gloVar, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"), ex, "DB", "SQL Insert", "데이터 저장 시 에러 발생. ", dID, $"{gloVar.IPAddress_List[gloVar.ID_List.ToList().IndexOf(dID)]}", $"{gloVar.Port_List[gloVar.ID_List.ToList().IndexOf(dID)]}", "");
+                    }
+                    catch (Exception ex22)
+                    {
+                        Console.WriteLine("\nErrorLog저장 시 에러 발생. \n원래에러: " + ex22.Message + ex22.StackTrace + " ");
+                    }
+
+                    try
+                    {
+                        gloVar.transaction_w.Rollback();
                     }
                     catch (Exception ex2)
                     {
-                        Console.WriteLine("\n DB Transaction RollBack Exception. ID: " + dID + ". " + ex2.Message + ex2.StackTrace);
+                        //Console.WriteLine("\n DB Transaction RollBack Exception. ID: " + dID + ". " + ex2.Message + ex2.StackTrace);
+                        // ErrorMessage || Exception 정보를 ErrorMsgs테이블에 저장함.
+                        try
+                        {
+                            GlobalMethods.ErrorMsgCollect(gloVar, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"), ex2, "DB", "SQL Transaction", "SQL Transaction Rollback 시 에러 발생. ", dID, $"{gloVar.IPAddress_List[gloVar.ID_List.ToList().IndexOf(dID)]}", $"{gloVar.Port_List[gloVar.ID_List.ToList().IndexOf(dID)]}", "");
+                        }
+                        catch (Exception ex22)
+                        {
+                            Console.WriteLine("\nErrorLog저장 시 에러 발생. \n원래에러: " + ex22.Message + ex22.StackTrace + " ");
+                        }
                     }
 
                 }
                 finally
                 {
-                    //sqlConn.Close();
-                    //sqlConn.Dispose();
-                    transaction.Dispose();
+                    gloVar.transaction_w.Dispose();
+                    //Console.Write(" Releasing mutex_lock for " + dID + " THD " + System.Threading.Thread.CurrentThread.Name + " .\n");
+                    gloVar.mutex_lock.ReleaseMutex();
                 }
             }
 
@@ -450,16 +400,16 @@ namespace CommonClassLibrary
         /// 중복데이터가 이미 저장이 되어있는지 확인
         /// </summary>
         /// <param name="sensorId"></param>
-        /// <param name="timestamp"></param>
+        /// <param name="sensorTimestamp"></param>
         /// <returns></returns>
-        public bool DataAlreadyExists(GlobalVariables gloVar, int sensorId, string timestamp)
+        public bool DataAlreadyExists(GlobalVariables gloVar, int sensorId, string sensorTimestamp, string pcTimestamp)
         {
             //mutex_lock2.WaitOne();
             //semaphore.WaitOne();
             duplicate = false;
             try
             {
-                sqlCmdText = $"SELECT TOP 1 1 FROM {gloVar.dataTable} WHERE {gloVar.S_DTColumns[2]} = {sensorId} AND {gloVar.S_DTColumns[1]} LIKE '{timestamp.Substring(0, timestamp.Length - 7)}%';";
+                sqlCmdText = $"SELECT TOP 1 1 FROM {gloVar.dataTable} WHERE {gloVar.S_DTColumns[2]} = {sensorId} AND {gloVar.S_DTColumns[1]} LIKE '{sensorTimestamp.Substring(0, sensorTimestamp.Length - 7)}%' AND {gloVar.S_DTColumns[0]} LIKE '{pcTimestamp.Substring(0, pcTimestamp.Length - 7)}%';";
 
                 CheckSqlConnAndCmd(gloVar);
 
@@ -473,12 +423,19 @@ namespace CommonClassLibrary
                     //Console.WriteLine("\nSQL New Data vs Old:" + timestamp + " ");
                     //Thread.Sleep(500);
                 }
-
-
             }
             catch (Exception ex)
             {
-                Console.WriteLine("중복데이터 확인 시 에러 발생. " + ex.Message + ex.StackTrace);
+                // ErrorMessage || Exception 정보를 ErrorMsgs테이블에 저장함.
+                try
+                {
+                    GlobalMethods.ErrorMsgCollect(gloVar, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"), ex, "DB", "SQL General", "중복 데이터 체크 시 에러 발생. ", sensorId, $"{gloVar.IPAddress_List[gloVar.ID_List.ToList().IndexOf(dID)]}", $"{gloVar.Port_List[gloVar.ID_List.ToList().IndexOf(dID)]}", "");
+                }
+                catch (Exception ex2)
+                {
+                    Console.WriteLine("\nErrorLog저장 시 에러 발생. \n원래에러: " + ex2.Message + ex2.StackTrace + " ");
+                }
+                //Console.WriteLine("중복데이터 확인 시 에러 발생. " + ex.Message + ex.StackTrace);
             }
             //mutex_lock2.ReleaseMutex();
             //semaphore.Release();
@@ -495,7 +452,7 @@ namespace CommonClassLibrary
         /// <returns></returns>
         public override string ToString()
         {
-            return "sTime: " + sTime + ", s_id_hex: " + dID_long + ", 온도: " + sTemperature + ", 습도: " + sHumidity + ", p0.3: " + sParticle03 + ", p0.5: " + sParticle05 + ", p1.0: " + sParticle10 + ", p5.0: " + sParticle50 + ", p10.0: " + sParticle100 + ", p25.0: " + sParticle250 + " ";
+            return "sTime: " + sTime + ", 온도: " + sTemperature + ", 습도: " + sHumidity + ", p0.3: " + sParticle03 + ", p0.5: " + sParticle05 + ", p1.0: " + sParticle10 + ", p5.0: " + sParticle50 + ", p10.0: " + sParticle100 + ", p25.0: " + sParticle250 + " ";
         }
 
 

@@ -83,6 +83,7 @@ namespace AirConDashboard
                 updaterThread = new System.Threading.Thread(UpdateData);
                 updaterThread.IsBackground = true;
                 updaterThread.Start();
+                Console.Write("\n\n\nTHREAD WAS STARTED AT " + DateTime.Now+"\n\n");
             }
             if(timer_forDataUpdate.Interval < 60000)
             {
@@ -108,7 +109,7 @@ namespace AirConDashboard
                         gloVar.sqlConn.ConnectionString = gloVar.sqlConStr;
                     gloVar.sqlConn.Open();
                 }
-
+                ds.Clear();
                 for (int i = 0; i < gloVar.ID_List.Length; i++)
                 {
                     gloVar.sqlCmdText = $"SELECT * FROM [{gloVar.dbName}].[dbo].[{gloVar.dataTable}] WHERE DateAndTime > DATEADD(MI, -1, GETDATE()) AND dID = {gloVar.ID_List[i]}";
@@ -258,7 +259,7 @@ namespace AirConDashboard
             label_humidMain.Text = airData_List[i].d_37current_humid + " %";
             label_humidStd.Text = airData_List[i].d_13default_humid + " %";
 
-            warningsPage.SetData(Form.ActiveForm, airData_List, i);
+            warningsPage.SetData(panel_container, airData_List, i);
 
         }
 
@@ -287,7 +288,7 @@ namespace AirConDashboard
             //Console.WriteLine("TabPage Index: " + i);
 
 
-            warningsPage.SetData(this, airData_List, i);
+            warningsPage.SetData(panel_container, airData_List, i);
             warningsPage.Visible = true;
         }
     }

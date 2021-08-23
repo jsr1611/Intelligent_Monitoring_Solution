@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 
-namespace DXApplicationViewer
+namespace THPDashboard
 {
     static class Program
     {

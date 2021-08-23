@@ -8,28 +8,21 @@ namespace AirConDashboard
 {
     public partial class warningsPage : UserControl
     {
-        private List<Label> iport_list = null;
-        private List<Label> wc_list = null;
-        private List<Label> wc2_list = null;
-        private List<Label> wc5_list = null;
-        private List<Label> wc6_list = null;
-        private List<Label> wc7_list = null;
-
         public warningsPage()
         {
             InitializeComponent();
-            iport_list = new List<Label>() { ip_00, ip_01, ip_02, ip_03, ip_04, ip_05, ip_06, ip_07, ip_08, ip_09, ip_10, ip_11, ip_12, ip_13, ip_14, ip_15 };
-            wc_list = new List<Label>() { wc_00, wc_01, wc_02, wc_03, wc_04, wc_05, wc_06, wc_07_sui, wc_08_gybsu, wc_09_pesu, wc_10_led6, wc_11_led5, wc_12_led4, wc_13_led3, wc_14_led2, wc_15_led1 };
-            wc2_list = new List<Label>() { wc2_00, wc2_01, wc2_02, wc2_03, wc2_04, wc2_05, wc2_06, wc2_07, wc2_08, wc2_09, wc2_10, wc2_11, wc2_12, wc2_13, wc2_14, wc2_15 };
-
-            wc5_list = new List<Label>() { wc5_00, wc5_08, wc5_09, wc5_10, wc5_11, wc5_12, wc5_13, wc5_14, wc5_15 };
-            wc6_list = new List<Label>() { wc6_00, wc6_08, wc6_09, wc6_10, wc6_11, wc6_12, wc6_13, wc6_14, wc6_15 };
-            wc7_list = new List<Label>() { wc7_00, wc7_08, wc7_09, wc7_10, wc7_11, wc7_12, wc7_13, wc7_14, wc7_15 };
+          
         }
 
 
-        public void SetData(Form activeForm, CommonClassLibrary.AirData[] airData_List, int i)
+        public void SetData(Panel activeForm, CommonClassLibrary.AirData[] airData_List, int i)
         {
+            if (activeForm is null)
+            {
+                return;
+            }
+
+            Console.WriteLine("\n\nData was updated\n\n");
             int btn_x = activeForm.Bounds.Right - 50;
             int btn_y = activeForm.Bounds.Top + 25;
             button_exit.SetBounds(btn_x, btn_y, button_exit.Bounds.Width, button_exit.Bounds.Height);
@@ -85,123 +78,6 @@ namespace AirConDashboard
 
             lbl_36_Temp.Text = airData_List[i].d_36current_temp + " C";
             lbl_37_Humid.Text = airData_List[i].d_37current_humid + " %";
-
-            //iport_list = 입력포트
-            //wc_list =  경보내용1
-            //wc2_list = 경보내용2
-            //runStop = 운전정지
-            //wc5_list = 냉방비례
-            //wc6_list = 난방비례
-            //wc7_list =가습비례
-
-            //-------------------------- iport_list = 입력포트 -------------------------- 
-            string binary = Convert.ToString(Convert.ToUInt16(airData_List[i].d_02inputPort), 2);
-            string TwosComplement = "0" + GetTwosComplement(binary);
-            TwosComplement = CheckLengthOfBits(TwosComplement);
-            if (TwosComplement.Length >= iport_list.Count)
-            {
-                for (int a = 0; a < iport_list.Count; a++)
-                {
-                    iport_list[a].Text = TwosComplement[(TwosComplement.Length - 1) - a].ToString();
-                }
-            }
-            //Console.Write($"Original input: {airData_List[i].d_02inputPort}, two's complement: {TwosComplement}.");
-
-            //-------------------------- wc_list =  경보내용1 -------------------------- 
-            int num = 0;
-            binary = Convert.ToString(Convert.ToUInt16(airData_List[i].d_03warningContent1), 2);
-            TwosComplement = "0" + GetTwosComplement(binary);
-            TwosComplement = CheckLengthOfBits(TwosComplement);
-            if (TwosComplement.Length >= wc_list.Count)
-            {
-                for (int a = 0; a < wc_list.Count; a++)
-                {
-                    int.TryParse(TwosComplement[(TwosComplement.Length - 1) - a].ToString(), out num);
-                    wc_list[a].BackColor = num == 1 ? Color.Green : Color.Transparent;
-                }
-            }
-            //Console.Write($"Original input: {airData_List[i].d_03warningContent1}, two's complement: {TwosComplement}.");
-
-            //-------------------------- wc2_list = 경보내용2 -------------------------- 
-            binary = Convert.ToString(Convert.ToUInt16(airData_List[i].d_04warningContent2), 2);
-            TwosComplement = "0" + GetTwosComplement(binary);
-            TwosComplement = CheckLengthOfBits(TwosComplement);
-            if (TwosComplement.Length >= wc2_list.Count)
-            {
-                for (int a = 0; a < wc2_list.Count; a++)
-                {
-                    int.TryParse(TwosComplement[(TwosComplement.Length - 1) - a].ToString(), out num);
-                    wc2_list[a].BackColor = num == 1 ? Color.Green : Color.Transparent;
-                }
-            }
-            //Console.Write($"Original input: {airData_List[i].d_04warningContent2}, two's complement: {TwosComplement}.");
-
-            //-------------------------- runStop = 운전정지 -------------------------- 
-            binary = Convert.ToString(Convert.ToUInt16(airData_List[i].d_05run_stop), 2);
-            TwosComplement = "0" + GetTwosComplement(binary);
-            TwosComplement = CheckLengthOfBits(TwosComplement);
-            if (TwosComplement.Length >= 15)
-            {
-                int.TryParse(TwosComplement[7].ToString().ToString(), out num);
-                runStop08_delay.Text = num.ToString();
-                runStop08_delay.BackColor = num == 1 ? Color.Green : Color.Transparent;
-
-                int.TryParse(TwosComplement[15].ToString().ToString(), out num);
-                runStop00_runStop.Text = num == 1 ? "운전": "정지";
-                runStop00_runStop.BackColor = num == 1 ? Color.Green : Color.Transparent;
-            }
-            // Console.Write($"Original input: {airData_List[i].d_05run_stop}, two's complement: {TwosComplement}.");
-
-            //-------------------------- wc5_list = 냉방비례 -------------------------- 
-            binary = Convert.ToString(Convert.ToUInt16(airData_List[i].d_06nengbang_prop), 2);
-            TwosComplement = "0" + GetTwosComplement(binary);
-            TwosComplement = CheckLengthOfBits(TwosComplement);
-            if (TwosComplement.Length >= wc5_list.Count)
-            {
-                for (int a = 1; a < wc5_list.Count; a++)
-                {
-                    int.TryParse(TwosComplement[(TwosComplement.Length - 8) - a].ToString(), out num);
-                    wc5_list[a].Text = num.ToString();
-                    wc5_list[a].BackColor = num == 1 ? Color.Green : Color.Transparent;
-                }
-            }
-            //Console.Write($"Original input: {airData_List[i].d_06nengbang_prop}, two's complement: {TwosComplement}.");
-
-            //-------------------------- wc6_list = 난방비례 -------------------------- 
-            binary = Convert.ToString(Convert.ToUInt16(airData_List[i].d_07nanbang_prop), 2);
-            TwosComplement = "0" + GetTwosComplement(binary);
-            TwosComplement = CheckLengthOfBits(TwosComplement);
-            if (TwosComplement.Length >= wc6_list.Count)
-            {
-                for (int a = 1; a < wc6_list.Count; a++)
-                {
-                    int.TryParse(TwosComplement[(TwosComplement.Length - 8) - a].ToString(), out num);
-                    wc6_list[a].Text = num.ToString();
-                    wc6_list[a].BackColor = num == 1 ? Color.Green : Color.Transparent;
-                }
-            }
-            //Console.Write($"Original input: {airData_List[i].d_07nanbang_prop}, two's complement: {TwosComplement}.");
-
-            //-------------------------- wc7_list = 가습비례 -------------------------- 
-            binary = Convert.ToString(Convert.ToUInt16(airData_List[i].d_08gasyb_prop), 2);
-            TwosComplement = "0" + GetTwosComplement(binary);
-            TwosComplement = CheckLengthOfBits(TwosComplement);
-            if (TwosComplement.Length >= wc7_list.Count)
-            {
-                for (int a = 1; a < wc7_list.Count; a++)
-                {
-                    int.TryParse(TwosComplement[(TwosComplement.Length - 8) - a].ToString(), out num);
-                    wc7_list[a].Text = num.ToString();
-                    wc7_list[a].BackColor = num == 1 ? Color.Green : Color.Transparent;
-                }
-            }
-            // Console.Write($"Original input: {airData_List[i].d_08gasyb_prop}, two's complement: {TwosComplement}.");
-
-
-            //--------------------------
-
-            // input:         111000100000000
-            //28928 => two's: 000111100000000
 
 
         }

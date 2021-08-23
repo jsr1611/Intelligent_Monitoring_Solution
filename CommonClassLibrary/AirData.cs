@@ -2,6 +2,7 @@
 
 namespace CommonClassLibrary 
 {
+    //Air = 공조시스템 (MEX-150) || 공조시스템 데이터
     public class AirData
     {
 
@@ -176,7 +177,7 @@ namespace CommonClassLibrary
             {
                 gloVar.sqlCmd = new System.Data.SqlClient.SqlCommand();
             }
-             gloVar.transaction = gloVar.sqlConn.BeginTransaction();
+             gloVar.transaction_w = gloVar.sqlConn.BeginTransaction();
 
 
             // VALUES( DateAndTime NVARCHAR(55) not null, dID int null, dCode NVARCHAR(250) null, dDataValue NVARCHAR(55) null, remarks NVARCHAR(255) null);
@@ -199,11 +200,11 @@ namespace CommonClassLibrary
 
             gloVar.sqlCmd.CommandText = gloVar.sqlCmdText;
             gloVar.sqlCmd.Connection = gloVar.sqlConn;
-            gloVar.sqlCmd.Transaction = gloVar.transaction;
+            gloVar.sqlCmd.Transaction = gloVar.transaction_w;
             try
             {
                 gloVar.sqlCmd.ExecuteNonQuery();
-                gloVar.transaction.Commit();
+                gloVar.transaction_w.Commit();
                 insert_OK = true;
             }
             catch (Exception ex)
@@ -211,7 +212,7 @@ namespace CommonClassLibrary
                 Console.Write($"DB Insertion Error: {ex.Message}. {ex.StackTrace}\n");
                 try
                 {
-                    gloVar.transaction.Rollback();
+                    gloVar.transaction_w.Rollback();
                 }
                 catch (Exception)
                 {
@@ -221,7 +222,7 @@ namespace CommonClassLibrary
             }
             finally
             {
-                gloVar.transaction.Dispose();
+                gloVar.transaction_w.Dispose();
 
 
             }
