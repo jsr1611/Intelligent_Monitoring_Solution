@@ -3,6 +3,12 @@ IMS is comprised of multiple services such as AC (Air condition data Collection 
 IMS is intended for IoT sensor device data collection and visualization inside industrial cleanroom environments. More info is TBD.
 
 
+## CI Status
+[![Build Status](https://dev.azure.com/jsr1611/IMS/build/status/jsr1611.IMS?branchName=master)](https://dev.azure.com/jsr1611/IMS/_build/latest?definitionId=33&branchName=master)
+
+
+
+
 # IMS Dashboard Data Visualizer
 - has two modes: *real time* & *user-selected period* using filters.
 <p align="center"> 
